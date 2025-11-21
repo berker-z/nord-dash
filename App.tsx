@@ -263,7 +263,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-nord-0 text-nord-4 font-mono selection:bg-nord-9 selection:text-nord-0 flex flex-col">
       {/* TOP BAR */}
-      <header className="p-4 border-b-2 border-nord-1 bg-nord-0/80 backdrop-blur-lg sticky top-0 z-40">
+      <header className="p-4 border-b-2 border-nord-16 bg-nord-0/80 backdrop-blur-lg sticky top-0 z-40">
         <div className="flex items-center justify-between max-w-[1600px] mx-auto">
           <div className="hidden md:flex items-center gap-4">
             <div className="flex items-center gap-2 text-nord-8 font-medium tracking-tighter text-lg">

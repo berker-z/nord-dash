@@ -210,7 +210,9 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
 
   // Calendar Mode Logic
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = Sun
+  const firstDayOfMonthRaw = new Date(year, month, 1).getDay(); // 0 = Sun, 1 = Mon, etc.
+  // Convert to Monday-based (0 = Mon, 6 = Sun)
+  const firstDayOfMonth = firstDayOfMonthRaw === 0 ? 6 : firstDayOfMonthRaw - 1;
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
@@ -299,7 +301,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
 
       {/* Weekday Headers */}
       <div className="grid grid-cols-7 mb-2 text-center">
-        {["SU", "MO", "TU", "WE", "TH", "FR", "SA"].map((d, i) => (
+        {["MO", "TU", "WE", "TH", "FR", "SA", "SU"].map((d, i) => (
           <span key={i} className="text-sm text-nord-3 font-medium uppercase">
             {d}
           </span>

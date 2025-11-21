@@ -30,7 +30,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
     <div
       className={`
         flex flex-col
-        bg-nord-0 border-2 border-nord-3 rounded-2xl
+        bg-nord-0 border-2 border-nord-16 rounded-2xl
         transition-all duration-200
         ${getHeightClass(item.heightLevel)}
         mb-8
@@ -39,7 +39,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       `}
     >
       {/* Header */}
-      <div className="bg-nord-1 px-4 py-3 flex items-center justify-between border-b-2 border-nord-3 select-none">
+      <div className="bg-nord-16 px-4 py-3 flex items-center justify-between border-b-2 border-nord-16 select-none">
         <div className="flex items-center gap-3 text-nord-4 font-medium text-lg tracking-widest font-mono">
           <GripVertical size={20} className="text-nord-3" />
           {item.title}

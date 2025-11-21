@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { BibleQuote } from "../types";
-import { getBibleQuote } from "../services/geminiService";
+import { getBibleQuote } from "../services/openaiService";
 import { Send } from "lucide-react";
 
 export const BibleWidget: React.FC = () => {
@@ -47,9 +47,7 @@ export const BibleWidget: React.FC = () => {
             <h3 className="text-nord-8 font-medium text-base mb-3 uppercase tracking-wider border-b border-nord-2 pb-1 inline-block">
               {quote.reference}
             </h3>
-            <p className="text-nord-5 text-xl leading-relaxed italic">
-              "{quote.text}"
-            </p>
+            <p className="text-nord-5 leading-relaxed italic">"{quote.text}"</p>
           </div>
           <button
             onClick={() => setQuote(null)}
