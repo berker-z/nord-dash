@@ -1,0 +1,5 @@
+{
+  "name": "Nord Dashboard",
+  "description": "A TTY-brutalist personal dashboard with Nord theme, featuring calendar, agenda, todos, crypto tracking, and AI-powered bible quotes.",
+  "requestFramePermissions": []
+}
