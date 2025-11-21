@@ -60,7 +60,7 @@ export const TodoWidget: React.FC = () => {
                 )}
               </span>
               <span
-                className={`text-lg ${
+                className={`${
                   todo.completed
                     ? "text-nord-3 line-through"
                     : "text-nord-5 font-medium"
@@ -78,7 +78,7 @@ export const TodoWidget: React.FC = () => {
           </li>
         ))}
         {todos.length === 0 && (
-          <li className="text-nord-3 text-lg italic text-center mt-10">
+          <li className="text-nord-3 italic text-center mt-10">
             {">"} NO_ACTIVE_TASKS
           </li>
         )}
@@ -93,7 +93,7 @@ export const TodoWidget: React.FC = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="New task..."
-          className="flex-1 bg-nord-1 border-2 border-nord-3 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-nord-9 text-nord-4 placeholder-nord-3"
+          className="flex-1 bg-nord-1 border-2 border-nord-3 rounded-lg px-4 py-3 focus:outline-none focus:border-nord-9 text-nord-4 placeholder-nord-3"
         />
         <button
           type="submit"

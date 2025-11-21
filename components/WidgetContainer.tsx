@@ -1,40 +1,33 @@
-import React from 'react';
-import { LayoutItem } from '../types';
-import { Minus, Plus, GripVertical } from 'lucide-react';
+import React from "react";
+import { LayoutItem } from "../types";
+import { Minus, Plus, GripVertical } from "lucide-react";
 
 interface WidgetContainerProps {
   item: LayoutItem;
   children: React.ReactNode;
   onResize: (change: number) => void;
-  onDragStart: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
-  isDragging: boolean;
 }
 
-export const WidgetContainer: React.FC<WidgetContainerProps> = ({ 
-  item, 
-  children, 
-  onResize, 
-  onDragStart, 
-  onDrop,
-  isDragging
+export const WidgetContainer: React.FC<WidgetContainerProps> = ({
+  item,
+  children,
+  onResize,
 }) => {
-  
   const getHeightClass = (level: number) => {
     switch (level) {
-      case 1: return 'h-[300px]';
-      case 2: return 'h-[500px]';
-      case 3: return 'h-[700px]';
-      default: return 'h-[500px]';
+      case 1:
+        return "h-[380px]"; // Increased from 300
+      case 2:
+        return "h-[600px]"; // Increased from 500
+      case 3:
+        return "h-[850px]"; // Increased from 700
+      default:
+        return "h-[600px]";
     }
   };
 
   return (
-    <div 
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={onDrop}
+    <div
       className={`
         flex flex-col
         bg-nord-0 border-2 border-nord-3 rounded-2xl
@@ -42,27 +35,27 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
         ${getHeightClass(item.heightLevel)}
         mb-8
         overflow-hidden
-        ${isDragging ? 'opacity-50 border-dashed border-nord-9' : 'hover:border-nord-8 shadow-lg'}
+        hover:border-nord-8 shadow-lg
       `}
     >
-      {/* Header - The entire header is the drag handle */}
-      <div className="bg-nord-1 px-4 py-3 flex items-center justify-between border-b-2 border-nord-3 select-none cursor-grab active:cursor-grabbing">
+      {/* Header */}
+      <div className="bg-nord-1 px-4 py-3 flex items-center justify-between border-b-2 border-nord-3 select-none">
         <div className="flex items-center gap-3 text-nord-4 font-medium text-lg tracking-widest font-mono">
           <GripVertical size={20} className="text-nord-3" />
           {item.title}
         </div>
-        
+
         {/* Controls - Only Resize */}
         <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
-          <button 
-            onClick={() => onResize(-1)} 
+          <button
+            onClick={() => onResize(-1)}
             className="p-1 hover:bg-nord-2 rounded hover:text-nord-11 disabled:opacity-30"
             disabled={item.heightLevel <= 1}
           >
             <Minus size={18} />
           </button>
-          <button 
-            onClick={() => onResize(1)} 
+          <button
+            onClick={() => onResize(1)}
             className="p-1 hover:bg-nord-2 rounded hover:text-nord-14 disabled:opacity-30"
             disabled={item.heightLevel >= 3}
           >
@@ -73,9 +66,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
 
       {/* Content */}
       <div className="flex-1 p-0 overflow-hidden bg-nord-0 relative flex flex-col">
-         <div className="flex-1 overflow-auto p-5">
-            {children}
-         </div>
+        <div className="flex-1 overflow-auto p-5">{children}</div>
       </div>
     </div>
   );

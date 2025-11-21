@@ -21,6 +21,7 @@ export interface CalendarEvent {
   link?: string;
   isTimeSpecific: boolean;
   time?: string; // HH:MM
+  colorId?: string;
 }
 
 export interface TodoItem {
