@@ -229,6 +229,7 @@ const App: React.FC = () => {
             mode="MONTH"
             accessToken={accessToken}
             onConnect={handleCalendarAuth}
+            onTokenExpired={() => setAccessToken(null)}
           />
         );
       case WidgetType.AGENDA:
@@ -237,6 +238,7 @@ const App: React.FC = () => {
             mode="AGENDA"
             accessToken={accessToken}
             onConnect={handleCalendarAuth}
+            onTokenExpired={() => setAccessToken(null)}
           />
         );
       case WidgetType.TODO:

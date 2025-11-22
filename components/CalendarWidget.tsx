@@ -4,6 +4,8 @@ import {
   listEvents,
   listCalendars,
   createEvent,
+  updateEvent,
+  deleteEvent,
 } from "../services/calendarService";
 import {
   ChevronLeft,
@@ -16,18 +18,23 @@ import {
   Plus,
   CheckSquare,
   CalendarDays,
+  Trash2,
+  Edit,
+  Users,
 } from "lucide-react";
 
 interface CalendarWidgetProps {
   mode: "MONTH" | "AGENDA";
   accessToken?: string | null;
   onConnect?: () => void;
+  onTokenExpired?: () => void;
 }
 
 export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   mode,
   accessToken,
   onConnect,
+  onTokenExpired,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -86,9 +93,13 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
 
       const fetched = await listEvents(accessToken, start, end);
       setEvents(fetched);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("FAILED_TO_SYNC");
+      if (err.message === "UNAUTHORIZED" && onTokenExpired) {
+        onTokenExpired();
+      } else {
+        setError("FAILED_TO_SYNC");
+      }
     } finally {
       setLoading(false);
     }
@@ -119,6 +130,37 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
     setIsAddModalOpen(false);
     fetchEvents(); // Refresh events
   };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!accessToken) return;
+    if (confirm("Are you sure you want to delete this event?")) {
+      try {
+        await deleteEvent(accessToken, eventId);
+        setSelectedEvent(null);
+        fetchEvents();
+      } catch (e: any) {
+        console.error(e);
+        if (e.message === "UNAUTHORIZED" && onTokenExpired) {
+          onTokenExpired();
+        } else {
+          alert("Failed to delete event");
+        }
+      }
+    }
+  };
+
+  const handleEditEvent = (event: CalendarEvent) => {
+    setSelectedEvent(null);
+    setAddEventDate(event.date);
+    // We need to pass the event to edit to the modal.
+    // For now, let's just open the modal and we'll handle pre-filling in the modal itself
+    // by adding an 'initialEvent' prop to AddEventModal.
+    setEditingEvent(event);
+    setIsAddModalOpen(true);
+  };
+
+  // State for editing
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   if (!accessToken) {
     return (
@@ -193,15 +235,22 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           <EventDetailModal
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
+            onDelete={() => handleDeleteEvent(selectedEvent.id)}
+            onEdit={() => handleEditEvent(selectedEvent)}
           />
         )}
         {isAddModalOpen && (
           <AddEventModal
             isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
+            onClose={() => {
+              setIsAddModalOpen(false);
+              setEditingEvent(null);
+            }}
             date={addEventDate}
             accessToken={accessToken}
             onSuccess={handleEventCreated}
+            initialEvent={editingEvent}
+            onTokenExpired={onTokenExpired}
           />
         )}
       </div>
@@ -351,16 +400,23 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
         <EventDetailModal
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
+          onDelete={() => handleDeleteEvent(selectedEvent.id)}
+          onEdit={() => handleEditEvent(selectedEvent)}
         />
       )}
 
       {isAddModalOpen && (
         <AddEventModal
           isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+          onClose={() => {
+            setIsAddModalOpen(false);
+            setEditingEvent(null);
+          }}
           date={addEventDate}
           accessToken={accessToken}
           onSuccess={handleEventCreated}
+          initialEvent={editingEvent}
+          onTokenExpired={onTokenExpired}
         />
       )}
     </div>
@@ -401,7 +457,9 @@ const EventItem: React.FC<{ evt: CalendarEvent; onClick: () => void }> = ({
 const EventDetailModal: React.FC<{
   event: CalendarEvent;
   onClose: () => void;
-}> = ({ event, onClose }) => {
+  onDelete: () => void;
+  onEdit: () => void;
+}> = ({ event, onClose, onDelete, onEdit }) => {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
@@ -411,12 +469,29 @@ const EventDetailModal: React.FC<{
         className="bg-nord-0 border-2 border-nord-8 w-full max-w-lg p-8 rounded-2xl shadow-2xl relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-nord-3 hover:text-nord-11"
-        >
-          <X size={28} />
-        </button>
+        <div className="absolute top-4 right-4 flex items-center gap-1">
+          <button
+            onClick={onEdit}
+            className="p-2 text-nord-3 hover:text-nord-8 hover:bg-nord-1 rounded transition-colors"
+            title="Edit"
+          >
+            <Edit size={20} />
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-2 text-nord-3 hover:text-nord-11 hover:bg-nord-1 rounded transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={20} />
+          </button>
+          <div className="w-px h-6 bg-nord-3/30 mx-2"></div>
+          <button
+            onClick={onClose}
+            className="p-1 text-nord-3 hover:text-nord-11 transition-colors"
+          >
+            <X size={28} />
+          </button>
+        </div>
 
         <div className="mb-8 border-b-2 border-nord-1 pb-4">
           <h2 className="text-xl font-medium text-nord-6 mb-2 uppercase">
@@ -452,15 +527,24 @@ const EventDetailModal: React.FC<{
               />
             </a>
           )}
-        </div>
 
-        <div className="mt-8 pt-6 border-t-2 border-nord-1 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-3 bg-nord-3 hover:bg-nord-2 text-nord-6 text-sm font-medium transition-colors uppercase tracking-wider rounded-lg"
-          >
-            [ CLOSE_MODAL ]
-          </button>
+          {event.attendees && event.attendees.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 text-nord-3 text-xs uppercase tracking-wider mb-2 font-bold">
+                <Users size={14} /> Attendees
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {event.attendees.map((a, i) => (
+                  <div
+                    key={i}
+                    className="bg-nord-1 border border-nord-3 rounded-full px-3 py-1 text-xs text-nord-4 flex items-center gap-2"
+                  >
+                    {a.email}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -473,12 +557,60 @@ const AddEventModal: React.FC<{
   date: Date;
   accessToken: string;
   onSuccess: () => void;
-}> = ({ isOpen, onClose, date, accessToken, onSuccess }) => {
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<"EVENT" | "TASK">("EVENT");
-  const [time, setTime] = useState("12:00");
-  const [description, setDescription] = useState("");
+  initialEvent?: CalendarEvent | null;
+  onTokenExpired?: () => void;
+}> = ({
+  isOpen,
+  onClose,
+  date,
+  accessToken,
+  onSuccess,
+  initialEvent,
+  onTokenExpired,
+}) => {
+  const [title, setTitle] = useState(initialEvent?.title || "");
+  const [type, setType] = useState<"EVENT" | "TASK">(
+    initialEvent?.colorId === "2" ? "TASK" : "EVENT"
+  );
+  const [time, setTime] = useState(
+    initialEvent?.time !== "ALL DAY" ? initialEvent?.time || "12:00" : "12:00"
+  );
+  const [description, setDescription] = useState(
+    initialEvent?.description || ""
+  );
+  const [duration, setDuration] = useState(60); // Default 60 mins
+  const [hasGoogleMeet, setHasGoogleMeet] = useState(
+    !!initialEvent?.link?.includes("meet.google")
+  );
+  const [attendees, setAttendees] = useState<string[]>([]);
+  const [newAttendee, setNewAttendee] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initialEvent) {
+      setTitle(initialEvent.title);
+      setType(initialEvent.colorId === "2" ? "TASK" : "EVENT");
+      if (initialEvent.time && initialEvent.time !== "ALL DAY") {
+        setTime(initialEvent.time);
+      }
+      setDescription(initialEvent.description || "");
+      setHasGoogleMeet(!!initialEvent.link?.includes("meet.google"));
+      if (initialEvent.attendees) {
+        setAttendees(initialEvent.attendees.map((a) => a.email));
+      }
+    }
+  }, [initialEvent]);
+
+  const handleAddAttendee = () => {
+    if (newAttendee && newAttendee.includes("@")) {
+      setAttendees([...attendees, newAttendee]);
+      setNewAttendee("");
+    }
+  };
+
+  const removeAttendee = (email: string) => {
+    setAttendees(attendees.filter((a) => a !== email));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -492,9 +624,9 @@ const AddEventModal: React.FC<{
       startDate.setHours(hours, minutes, 0);
 
       const endDate = new Date(startDate);
-      endDate.setHours(hours + 1, minutes, 0); // Default 1 hour duration
+      endDate.setMinutes(startDate.getMinutes() + duration);
 
-      const event = {
+      const eventBody: any = {
         summary: title,
         description: description,
         start: {
@@ -505,15 +637,34 @@ const AddEventModal: React.FC<{
           dateTime: endDate.toISOString(),
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
-        // Color ID 2 is Sage (Green) for Tasks, 9 is Blueberry (Blue) for Events
         colorId: type === "TASK" ? "2" : "9",
+        attendees: attendees.map((email) => ({ email })),
       };
 
-      await createEvent(accessToken, event);
+      if (hasGoogleMeet) {
+        eventBody.conferenceData = {
+          createRequest: {
+            requestId: Math.random().toString(36).substring(7),
+            conferenceSolutionKey: { type: "hangoutsMeet" },
+          },
+        };
+      }
+
+      if (initialEvent) {
+        await updateEvent(accessToken, initialEvent.id, eventBody);
+      } else {
+        await createEvent(accessToken, eventBody);
+      }
+
       onSuccess();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to create event");
+      if (e.message === "UNAUTHORIZED" && onTokenExpired) {
+        onTokenExpired();
+        onClose();
+      } else {
+        alert("Failed to save event");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -525,11 +676,11 @@ const AddEventModal: React.FC<{
       onClick={onClose}
     >
       <div
-        className="bg-nord-0 border-2 border-nord-8 w-full max-w-md p-6 rounded-2xl shadow-2xl relative"
+        className="bg-nord-0 border-2 border-nord-8 w-full max-w-md p-6 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-medium text-nord-6 mb-6 uppercase border-b border-nord-1 pb-2">
-          Add New {type}
+          {initialEvent ? "Edit" : "Add New"} {type}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -576,14 +727,6 @@ const AddEventModal: React.FC<{
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
-                Date
-              </label>
-              <div className="bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 opacity-50 cursor-not-allowed">
-                {date.toLocaleDateString()}
-              </div>
-            </div>
-            <div className="flex-1">
-              <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
                 Time
               </label>
               <input
@@ -593,6 +736,84 @@ const AddEventModal: React.FC<{
                 className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none"
               />
             </div>
+            <div className="flex-1">
+              <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
+                Duration
+              </label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none"
+              >
+                <option value={15}>15 mins</option>
+                <option value={30}>30 mins</option>
+                <option value={60}>1 Hour</option>
+                <option value={90}>1.5 Hours</option>
+                <option value={120}>2 Hours</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 py-2">
+            <input
+              type="checkbox"
+              id="googleMeet"
+              checked={hasGoogleMeet}
+              onChange={(e) => setHasGoogleMeet(e.target.checked)}
+              className="w-4 h-4 rounded border-nord-3 bg-nord-1 text-nord-9 focus:ring-nord-9"
+            />
+            <label
+              htmlFor="googleMeet"
+              className="text-nord-4 text-sm flex items-center gap-2 cursor-pointer"
+            >
+              <Video size={16} /> Add Google Meet Conference
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
+              Invite People
+            </label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="email"
+                value={newAttendee}
+                onChange={(e) => setNewAttendee(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddAttendee();
+                  }
+                }}
+                placeholder="email@example.com"
+                className="flex-1 bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleAddAttendee}
+                className="bg-nord-3 text-nord-6 px-3 rounded hover:bg-nord-2 transition-colors"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+            {attendees.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {attendees.map((email) => (
+                  <div
+                    key={email}
+                    className="bg-nord-1 border border-nord-3 rounded-full px-3 py-1 text-xs text-nord-4 flex items-center gap-2"
+                  >
+                    {email}
+                    <button
+                      onClick={() => removeAttendee(email)}
+                      className="hover:text-nord-11"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

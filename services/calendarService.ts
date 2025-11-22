@@ -39,6 +39,9 @@ export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Da
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("UNAUTHORIZED");
+      }
       const errorBody = await response.text();
       console.error('Calendar API Error Response:', response.status, errorBody);
       throw new Error(`Failed to fetch calendar events: ${response.status} ${response.statusText}`);
@@ -81,17 +84,24 @@ export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Da
         isTimeSpecific: !isAllDay,
         time: isAllDay ? 'ALL DAY' : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
         colorId: item.colorId,
+        attendees: item.attendees,
       };
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Calendar API Error:", error);
+    if (error.message === "UNAUTHORIZED") {
+      throw error;
+    }
     return [];
   }
 };
 
+
+
 export const createEvent = async (accessToken: string, event: any) => {
   try {
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    // conferenceDataVersion=1 is required to create Google Meet links
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -101,6 +111,9 @@ export const createEvent = async (accessToken: string, event: any) => {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("UNAUTHORIZED");
+      }
       const error = await response.text();
       console.error("Failed to create event:", error);
       throw new Error("Failed to create event");
@@ -109,6 +122,58 @@ export const createEvent = async (accessToken: string, event: any) => {
     return await response.json();
   } catch (error) {
     console.error("Create Event Error:", error);
+    throw error;
+  }
+};
+
+export const updateEvent = async (accessToken: string, eventId: string, event: any) => {
+  try {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}?conferenceDataVersion=1`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(event),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("UNAUTHORIZED");
+      }
+      const error = await response.text();
+      console.error("Failed to update event:", error);
+      throw new Error("Failed to update event");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update Event Error:", error);
+    throw error;
+  }
+};
+
+export const deleteEvent = async (accessToken: string, eventId: string) => {
+  try {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("UNAUTHORIZED");
+      }
+      const error = await response.text();
+      console.error("Failed to delete event:", error);
+      throw new Error("Failed to delete event");
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Delete Event Error:", error);
     throw error;
   }
 };

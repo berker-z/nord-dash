@@ -22,6 +22,7 @@ export interface CalendarEvent {
   isTimeSpecific: boolean;
   time?: string; // HH:MM
   colorId?: string;
+  attendees?: { email: string }[];
 }
 
 export interface TodoItem {
