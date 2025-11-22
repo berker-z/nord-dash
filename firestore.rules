@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Relaxed rules - allow all read/write for now
+    // TODO: Add proper authentication later
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

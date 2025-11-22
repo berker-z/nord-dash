@@ -244,7 +244,7 @@ const App: React.FC = () => {
           />
         );
       case WidgetType.TODO:
-        return <TodoWidget />;
+        return <TodoWidget userEmail={user?.email || null} />;
       case WidgetType.CRYPTO:
         return <CryptoWidget />;
       case WidgetType.BIBLE:

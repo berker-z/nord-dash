@@ -1,26 +1,44 @@
 import React, { useState, useEffect } from "react";
 import { TodoItem } from "../types";
 import { Trash2, CheckSquare, Square, Plus } from "lucide-react";
+import { subscribeTodos, saveTodos } from "../services/todoService";
 
-export const TodoWidget: React.FC = () => {
-  const [todos, setTodos] = useState<TodoItem[]>(() => {
-    const saved = localStorage.getItem("nord_todos");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          { id: "1", text: "Install NixOS", completed: true },
-          { id: "2", text: "Configure Hyprland", completed: false },
-        ];
-  });
+interface TodoWidgetProps {
+  userEmail: string | null;
+}
+
+export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
+  const [todos, setTodos] = useState<TodoItem[]>([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(true);
 
+  // Subscribe to real-time todos from Firestore
   useEffect(() => {
-    localStorage.setItem("nord_todos", JSON.stringify(todos));
-  }, [todos]);
+    if (!userEmail) {
+      setTodos([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const unsubscribe = subscribeTodos(userEmail, (firestoreTodos) => {
+      setTodos(firestoreTodos);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userEmail]);
+
+  // Save todos to Firestore whenever they change
+  useEffect(() => {
+    if (userEmail && !loading) {
+      saveTodos(userEmail, todos);
+    }
+  }, [todos, userEmail, loading]);
 
   const handleAdd = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !userEmail) return;
     const newTodo: TodoItem = {
       id: Date.now().toString(),
       text: input.trim(),
@@ -39,6 +57,23 @@ export const TodoWidget: React.FC = () => {
   const deleteTodo = (id: string) => {
     setTodos(todos.filter((t) => t.id !== id));
   };
+
+  if (!userEmail) {
+    return (
+      <div className="flex flex-col font-mono items-center justify-center h-64 text-nord-3">
+        <p className="text-center">Please log in to access your tasks.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col font-mono items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-nord-8 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-nord-3 mt-4">Loading tasks...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col font-mono">

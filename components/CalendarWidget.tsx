@@ -495,6 +495,16 @@ const EventDetailModal: React.FC<{
   onDelete: () => void;
   onEdit: () => void;
 }> = ({ event, onClose, onDelete, onEdit }) => {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
@@ -603,6 +613,18 @@ const AddEventModal: React.FC<{
   initialEvent,
   onTokenExpired,
 }) => {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
   const [title, setTitle] = useState(initialEvent?.title || "");
   const [type, setType] = useState<"EVENT" | "TASK">(
     initialEvent?.colorId === "2" ? "TASK" : "EVENT"
