@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { TodoItem } from "../types";
 import { Trash2, CheckSquare, Square, Plus } from "lucide-react";
 import { subscribeTodos, saveTodos } from "../services/todoService";
@@ -11,29 +11,43 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
+  // Track if we've loaded initial data from Firestore to prevent saving during mount/logout
+  const hasLoadedFromFirestore = useRef(false);
 
   // Subscribe to real-time todos from Firestore
   useEffect(() => {
     if (!userEmail) {
       setTodos([]);
       setLoading(false);
+      hasLoadedFromFirestore.current = false; // Reset on logout
       return;
     }
 
     setLoading(true);
+    hasLoadedFromFirestore.current = false; // Reset when user changes
     const unsubscribe = subscribeTodos(userEmail, (firestoreTodos) => {
       setTodos(firestoreTodos);
       setLoading(false);
+      hasLoadedFromFirestore.current = true; // Mark as loaded
     });
 
     return () => unsubscribe();
   }, [userEmail]);
 
   // Save todos to Firestore whenever they change
+  // CRITICAL: Only save after we've loaded initial data from Firestore
+  // This prevents race conditions during login/logout
   useEffect(() => {
-    if (userEmail && !loading) {
-      saveTodos(userEmail, todos);
+    // Only save if:
+    // 1. User is logged in (userEmail exists)
+    // 2. Not currently loading from Firestore
+    // 3. We've successfully loaded initial data (prevents saving empty array on mount/logout)
+    if (!userEmail || loading || !hasLoadedFromFirestore.current) {
+      return;
     }
+
+    // Save the current state to Firestore
+    saveTodos(userEmail, todos);
   }, [todos, userEmail, loading]);
 
   const handleAdd = (e?: React.FormEvent) => {
