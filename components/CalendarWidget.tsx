@@ -310,7 +310,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
       days.push(
         <div
           key={`empty-${i}`}
-          className="min-h-[40px] bg-nord-0/30 rounded-md"
+          className="min-h-[30px] bg-nord-0/30 rounded-md"
         ></div>
       );
     }
@@ -329,7 +329,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           key={d}
           onClick={() => handleDayClick(d)}
           className={`
-                min-h-[50px] flex flex-col items-center justify-center cursor-pointer transition-all relative rounded-md
+                min-h-[30px] py-1 flex flex-col items-center justify-center cursor-pointer transition-all relative rounded-md
                 ${
                   isToday
                     ? "bg-nord-3 text-nord-6 font-medium ring-2 ring-nord-8"
@@ -338,9 +338,9 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
                 ${hasEvents ? "text-nord-8" : ""}
             `}
         >
-          <span className="font-medium">{d}</span>
+          <span className="font-medium mb-3">{d}</span>
           {hasEvents && (
-            <div className="w-1.5 h-1.5 rounded-full bg-nord-13 absolute bottom-1.5"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-nord-13 absolute bottom-1"></div>
           )}
         </div>
       );
@@ -349,9 +349,9 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col relative font-mono">
+    <div className="flex flex-col relative font-mono">
       {/* Calendar Header */}
-      <div className="flex justify-between items-center mb-6 pb-2 border-b border-nord-1">
+      <div className="flex justify-between items-center mb-3 pb-2 border-b border-nord-1">
         <button
           onClick={prevMonth}
           className="p-2 hover:bg-nord-1 rounded hover:text-nord-8"
@@ -382,9 +382,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-2 flex-1">
-        {renderCalendarGrid()}
-      </div>
+      <div className="grid grid-cols-7 gap-2.5">{renderCalendarGrid()}</div>
 
       {/* Popups */}
       {selectedDayEvents && (

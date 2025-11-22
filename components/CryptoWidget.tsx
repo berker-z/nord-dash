@@ -39,7 +39,7 @@ export const CryptoWidget: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-full flex flex-col font-mono">
+    <div className="flex flex-col font-mono">
       <div className="flex justify-between items-end mb-6 text-sm text-nord-3 border-b-2 border-nord-1 pb-2">
         <span>LAST_SYNC: {lastUpdated.toLocaleTimeString()}</span>
         <button

@@ -41,7 +41,7 @@ export const TodoWidget: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col font-mono">
+    <div className="flex flex-col font-mono">
       <ul className="space-y-3 flex-1 overflow-y-auto pr-2 mb-4">
         {todos.map((todo) => (
           <li

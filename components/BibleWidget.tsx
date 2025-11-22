@@ -33,7 +33,7 @@ export const BibleWidget: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col font-mono">
+    <div className="flex flex-col font-mono">
       {!quote ? (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 p-4">
           <div className="text-nord-3 text-6xl select-none">†</div>

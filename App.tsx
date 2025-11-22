@@ -55,20 +55,20 @@ interface GoogleUser {
 // Initial Layout Configuration
 const initialLayout: Record<number, LayoutItem[]> = {
   0: [
-    { id: "w1", type: WidgetType.CALENDAR, title: "/calendar", heightLevel: 2 },
+    { id: "w1", type: WidgetType.CALENDAR, title: "/calendar", heightLevel: 0 },
     {
       id: "w2",
       type: WidgetType.AGENDA,
       title: "/daily_agenda",
-      heightLevel: 2,
+      heightLevel: 0,
     },
   ],
   1: [
-    { id: "w3", type: WidgetType.TODO, title: "/system_tasks", heightLevel: 3 },
+    { id: "w3", type: WidgetType.TODO, title: "/system_tasks", heightLevel: 0 },
   ],
   2: [
-    { id: "w4", type: WidgetType.CRYPTO, title: "/markets", heightLevel: 1 },
-    { id: "w5", type: WidgetType.BIBLE, title: "/bible_qotd", heightLevel: 2 },
+    { id: "w4", type: WidgetType.CRYPTO, title: "/markets", heightLevel: 0 },
+    { id: "w5", type: WidgetType.BIBLE, title: "/bible_qotd", heightLevel: 0 },
   ],
 };
 
@@ -217,7 +217,7 @@ const App: React.FC = () => {
     const newLayout = { ...layout };
     const item = newLayout[colIndex][itemIndex];
     const newHeight = item.heightLevel + change;
-    if (newHeight >= 1 && newHeight <= 3) {
+    if (newHeight >= 0) {
       item.heightLevel = newHeight;
       setLayout(newLayout);
     }

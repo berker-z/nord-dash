@@ -13,30 +13,18 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
   children,
   onResize,
 }) => {
-  const getHeightClass = (level: number) => {
-    switch (level) {
-      case 1:
-        return "h-[380px]"; // Increased from 300
-      case 2:
-        return "h-[600px]"; // Increased from 500
-      case 3:
-        return "h-[850px]"; // Increased from 700
-      default:
-        return "h-[600px]";
-    }
-  };
-
   return (
     <div
       className={`
         flex flex-col
         bg-nord-0 border-2 border-nord-16 rounded-2xl
         transition-all duration-200
-        ${getHeightClass(item.heightLevel)}
+        h-auto
         mb-8
         overflow-hidden
         hover:border-nord-8 shadow-lg
       `}
+      style={{ paddingBottom: `${item.heightLevel * 200}px` }}
     >
       {/* Header */}
       <div className="bg-nord-16 px-4 py-3 flex items-center justify-between border-b-2 border-nord-16 select-none">
@@ -50,14 +38,13 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
           <button
             onClick={() => onResize(-1)}
             className="p-1 hover:bg-nord-2 rounded hover:text-nord-11 disabled:opacity-30"
-            disabled={item.heightLevel <= 1}
+            disabled={item.heightLevel <= 0}
           >
             <Minus size={18} />
           </button>
           <button
             onClick={() => onResize(1)}
             className="p-1 hover:bg-nord-2 rounded hover:text-nord-14 disabled:opacity-30"
-            disabled={item.heightLevel >= 3}
           >
             <Plus size={18} />
           </button>
@@ -65,7 +52,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-0 overflow-hidden bg-nord-0 relative flex flex-col">
+      <div className="flex-1 p-0 bg-nord-0 relative flex flex-col rounded-b-2xl overflow-hidden">
         <div className="flex-1 overflow-auto p-5">{children}</div>
       </div>
     </div>
