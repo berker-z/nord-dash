@@ -17,6 +17,7 @@ import {
   User,
   Copy,
 } from "lucide-react";
+import { ConfirmModal } from "./components/ConfirmModal";
 
 // Declare Google Global for TS
 declare global {
@@ -90,6 +91,7 @@ const App: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const [originUrl, setOriginUrl] = useState("");
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // Clock & Weather Effect
   useEffect(() => {
@@ -313,11 +315,8 @@ const App: React.FC = () => {
             {/* Login Status (Always Visible) */}
             <button
               onClick={() => {
-                if (
-                  user &&
-                  window.confirm("Are you sure you want to logout?")
-                ) {
-                  handleLogout();
+                if (user) {
+                  setIsLogoutModalOpen(true);
                 }
               }}
               disabled={!user}
@@ -453,6 +452,19 @@ const App: React.FC = () => {
           ))}
         </div>
       </main>
+
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        title="System Logout"
+        message="Are you sure you want to logout? You will need to re-authenticate to access your dashboard."
+        onConfirm={() => {
+          handleLogout();
+          setIsLogoutModalOpen(false);
+        }}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        confirmText="Logout"
+        isDestructive={true}
+      />
     </div>
   );
 };

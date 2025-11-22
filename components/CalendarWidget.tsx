@@ -22,6 +22,7 @@ import {
   Edit,
   Users,
 } from "lucide-react";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface CalendarWidgetProps {
   mode: "MONTH" | "AGENDA";
@@ -131,20 +132,30 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
     fetchEvents(); // Refresh events
   };
 
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!accessToken) return;
-    if (confirm("Are you sure you want to delete this event?")) {
-      try {
-        await deleteEvent(accessToken, eventId);
-        setSelectedEvent(null);
-        fetchEvents();
-      } catch (e: any) {
-        console.error(e);
-        if (e.message === "UNAUTHORIZED" && onTokenExpired) {
-          onTokenExpired();
-        } else {
-          alert("Failed to delete event");
-        }
+  // Delete Confirmation State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (eventId: string) => {
+    setEventToDelete(eventId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!accessToken || !eventToDelete) return;
+
+    try {
+      await deleteEvent(accessToken, eventToDelete);
+      setSelectedEvent(null);
+      setIsDeleteModalOpen(false);
+      setEventToDelete(null);
+      fetchEvents();
+    } catch (e: any) {
+      console.error(e);
+      if (e.message === "UNAUTHORIZED" && onTokenExpired) {
+        onTokenExpired();
+      } else {
+        alert("Failed to delete event");
       }
     }
   };
@@ -235,7 +246,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           <EventDetailModal
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
-            onDelete={() => handleDeleteEvent(selectedEvent.id)}
+            onDelete={() => handleDeleteClick(selectedEvent.id)}
             onEdit={() => handleEditEvent(selectedEvent)}
           />
         )}
@@ -253,6 +264,19 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
             onTokenExpired={onTokenExpired}
           />
         )}
+
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          title="Delete Event"
+          message="Are you sure you want to delete this event? This action cannot be undone."
+          onConfirm={confirmDeleteEvent}
+          onCancel={() => {
+            setIsDeleteModalOpen(false);
+            setEventToDelete(null);
+          }}
+          confirmText="Delete"
+          isDestructive={true}
+        />
       </div>
     );
   }
@@ -400,7 +424,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
         <EventDetailModal
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
-          onDelete={() => handleDeleteEvent(selectedEvent.id)}
+          onDelete={() => handleDeleteClick(selectedEvent.id)}
           onEdit={() => handleEditEvent(selectedEvent)}
         />
       )}
@@ -419,6 +443,19 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           onTokenExpired={onTokenExpired}
         />
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="Delete Event"
+        message="Are you sure you want to delete this event? This action cannot be undone."
+        onConfirm={confirmDeleteEvent}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setEventToDelete(null);
+        }}
+        confirmText="Delete"
+        isDestructive={true}
+      />
     </div>
   );
 };

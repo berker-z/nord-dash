@@ -12,7 +12,7 @@ export const getBibleQuote = async (feeling: string): Promise<BibleQuote> => {
 
   try {
     const prompt = `The user is feeling: "${feeling}".
-Find a bible verse that resonates with this feeling and offers comfort, wisdom, or guidance.
+Find a bible passage that resonates with this feeling and offers comfort, wisdom, or guidance.
 Prefer the New Testament, but use the Old Testament if it is a perfect fit.
 Return ONLY a valid JSON object with this exact structure:
 {
@@ -27,7 +27,7 @@ Return ONLY a valid JSON object with this exact structure:
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',

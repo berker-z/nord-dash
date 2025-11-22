@@ -80,7 +80,7 @@ export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Da
         title: item.summary || '(No Title)',
         date: dateObj,
         description: item.description, // Description is already passed, just ensuring it's explicit
-        link: videoLink || item.htmlLink, // Prefer video link, fallback to event link
+        link: videoLink, // Only use detected video links, don't fallback to generic calendar URL
         isTimeSpecific: !isAllDay,
         time: isAllDay ? 'ALL DAY' : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
         colorId: item.colorId,
