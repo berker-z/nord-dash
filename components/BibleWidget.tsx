@@ -47,7 +47,9 @@ export const BibleWidget: React.FC = () => {
             <h3 className="text-nord-8 font-medium text-base mb-3 uppercase tracking-wider border-b border-nord-2 pb-1 inline-block">
               {quote.reference}
             </h3>
-            <p className="text-nord-5 leading-relaxed italic">"{quote.text}"</p>
+            <p className="text-nord-5 leading-relaxed whitespace-pre-line">
+              "{quote.text}"
+            </p>
           </div>
           <button
             onClick={() => setQuote(null)}

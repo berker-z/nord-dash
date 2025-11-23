@@ -12,12 +12,13 @@ export const getBibleQuote = async (feeling: string): Promise<BibleQuote> => {
 
   try {
     const prompt = `The user is feeling: "${feeling}".
-Find a bible passage that resonates with this feeling and offers comfort, wisdom, or guidance.
+Find a meaningful bible passage (3-6 verses) that resonates with this feeling and offers deep comfort, wisdom, or guidance.
+Focus on passages that encourage reflection and provide substantial spiritual nourishment.
 Prefer the New Testament, but use the Old Testament if it is a perfect fit.
 Return ONLY a valid JSON object with this exact structure:
 {
-  "reference": "Book Chapter:Verse",
-  "text": "The verse text"
+  "reference": "Book Chapter:StartVerse-EndVerse",
+  "text": "The full passage text"
 }`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -31,7 +32,7 @@ Return ONLY a valid JSON object with this exact structure:
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that provides relevant Bible verses. Always respond with valid JSON only.'
+            content: 'You are a helpful assistant that provides relevant Bible passages. Always respond with valid JSON only.'
           },
           {
             role: 'user',
@@ -40,7 +41,7 @@ Return ONLY a valid JSON object with this exact structure:
         ],
         response_format: { type: 'json_object' },
         temperature: 0.7,
-        max_tokens: 300
+        max_tokens: 600
       })
     });
 
