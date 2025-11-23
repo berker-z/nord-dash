@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Plane,
-  Home,
+  Cat,
   Calendar as CalendarIcon,
   X,
   Clock,
+  Briefcase,
   MapPin,
   ChevronLeft,
   ChevronRight,
@@ -185,26 +186,8 @@ export const ScheduleWidget: React.FC = () => {
         onClick={() => setIsModalOpen(true)}
         className="h-full flex flex-col justify-between cursor-pointer group p-4 rounded-lg"
       >
-        <div className="flex justify-between items-start">
-          <div className="p-2 rounded-lg bg-nord-3 text-nord-6 group-hover:bg-nord-9 group-hover:text-nord-0 transition-colors">
-            {status.state === "HOME" ? (
-              <Home size={24} />
-            ) : status.state === "STANDBY" ? (
-              <Clock size={24} />
-            ) : (
-              <Plane
-                size={24}
-                className={status.state === "FLYING" ? "animate-pulse" : ""}
-              />
-            )}
-          </div>
-          <div className="text-xs font-mono text-nord-3 uppercase tracking-widest">
-            STATUS
-          </div>
-        </div>
-
-        <div>
-          <div className="text-nord-4 font-medium text-lg leading-tight mb-1">
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-nord-4 font-medium text-lg leading-tight">
             {status.state === "HOME"
               ? "Elif is Home"
               : status.state === "STANDBY"
@@ -213,7 +196,21 @@ export const ScheduleWidget: React.FC = () => {
               ? `In ${status.location}`
               : status.location}
           </div>
+          <div className="p-2 rounded-lg bg-nord-3 text-nord-6 group-hover:bg-nord-9 group-hover:text-nord-0 transition-colors">
+            {status.state === "HOME" ? (
+              <Cat size={24} />
+            ) : status.state === "STANDBY" ? (
+              <Briefcase size={24} />
+            ) : (
+              <Plane
+                size={24}
+                className={status.state === "FLYING" ? "animate-pulse" : ""}
+              />
+            )}
+          </div>
+        </div>
 
+        <div>
           {(status.state === "FLYING" || status.state === "AWAY") &&
             status.until && (
               <div className="text-sm text-nord-6 font-mono">
@@ -537,7 +534,14 @@ const FlightDetailModal: React.FC<{
               : eventEntry!.details.flight_number}
           </h2>
           <div className="flex items-center gap-3 text-nord-13 text-base font-mono font-medium">
-            <Plane size={20} />
+            {isTrip ? (
+              <Cat size={20} />
+            ) : eventEntry!.details.flight_number === "HSBY" ||
+              eventEntry!.details.flight_number === "CFR" ? (
+              <Briefcase size={20} />
+            ) : (
+              <Plane size={20} />
+            )}
             <span>
               {isTrip
                 ? `${tripEntry!.outbound.flight} / ${tripEntry!.inbound.flight}`
@@ -599,7 +603,7 @@ const FlightDetailModal: React.FC<{
             <>
               <div className="bg-nord-1 p-4 text-base text-nord-4 leading-relaxed font-mono border-l-4 border-nord-14 rounded-r-lg">
                 <div className="flex items-center gap-2 text-nord-3 text-xs uppercase tracking-wider mb-2 font-bold">
-                  <MapPin size={14} /> Location
+                  <Briefcase size={14} /> Duty Type
                 </div>
                 <div className="space-y-1">
                   <div>From: {eventEntry.details.departure_airport}</div>
