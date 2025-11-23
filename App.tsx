@@ -280,8 +280,8 @@ const App: React.FC = () => {
         <div className="flex items-center justify-between max-w-[1600px] mx-auto">
           <div className="hidden md:flex items-center gap-4">
             <div className="flex items-center gap-2 text-nord-8 font-medium tracking-tighter text-lg">
-              <Terminal size={24} />
-              <span>SYS.DASH.v1</span>
+              <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
+              <span>THE WIRED // v1</span>
             </div>
           </div>
 
