@@ -135,21 +135,15 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
 
       <form
         onSubmit={handleAdd}
-        className="flex gap-3 pt-4 border-t-2 border-nord-1 mt-auto"
+        className="pt-4 border-t-2 border-nord-1 mt-auto"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="New task..."
-          className="flex-1 bg-nord-1 border-2 border-nord-3 rounded-lg px-4 py-3 focus:outline-none focus:border-nord-9 text-nord-4 placeholder-nord-3"
+          className="w-full bg-nord-1 border-2 border-nord-3 rounded-lg px-4 py-3 focus:outline-none focus:border-nord-9 text-nord-4 placeholder-nord-3"
         />
-        <button
-          type="submit"
-          className="bg-nord-3 hover:bg-nord-9 hover:text-nord-1 text-nord-4 px-5 rounded-lg flex items-center justify-center transition-colors"
-        >
-          <Plus size={24} />
-        </button>
       </form>
     </div>
   );
