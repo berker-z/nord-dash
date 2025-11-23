@@ -1,0 +1,148 @@
+[
+  {
+    "type": "TRIP",
+    "destination": "Cairo International Airport",
+    "outbound": {
+      "flight": "TK692",
+      "departure": "2025-11-03 02:20:00",
+      "arrival": "2025-11-03 04:40:00"
+    },
+    "inbound": {
+      "flight": "TK693",
+      "departure": "2025-11-03 06:25:00",
+      "arrival": "2025-11-03 08:50:00"
+    },
+    "rest_time": "1h 45m"
+  },
+  {
+    "type": "EVENT",
+    "details": {
+      "flight_number": "CFR",
+      "departure_airport": "IST",
+      "arrival_airport": "IST",
+      "departure_country": "Unknown",
+      "arrival_country": "Unknown",
+      "departure_time": "2025-11-04 06:01:00",
+      "arrival_time": "2025-11-04 23:59:00",
+      "duration": "17h 58m"
+    }
+  },
+  {
+    "type": "TRIP",
+    "destination": "Trabzon Airport",
+    "outbound": {
+      "flight": "TK2826",
+      "departure": "2025-11-06 07:10:00",
+      "arrival": "2025-11-06 08:55:00"
+    },
+    "inbound": {
+      "flight": "TK2827",
+      "departure": "2025-11-06 09:40:00",
+      "arrival": "2025-11-06 11:45:00"
+    },
+    "rest_time": "0h 45m"
+  },
+  {
+    "type": "TRIP",
+    "destination": "Gaziantep Airport",
+    "outbound": {
+      "flight": "TK2226",
+      "departure": "2025-11-06 13:30:00",
+      "arrival": "2025-11-06 15:15:00"
+    },
+    "inbound": {
+      "flight": "TK2241",
+      "departure": "2025-11-07 04:45:00",
+      "arrival": "2025-11-07 06:40:00"
+    },
+    "rest_time": "13h 30m"
+  },
+  {
+    "type": "TRIP",
+    "destination": "Chisinau International Airport",
+    "outbound": {
+      "flight": "TK269",
+      "departure": "2025-11-07 08:35:00",
+      "arrival": "2025-11-07 10:05:00"
+    },
+    "inbound": {
+      "flight": "TK270",
+      "departure": "2025-11-07 10:55:00",
+      "arrival": "2025-11-07 12:35:00"
+    },
+    "rest_time": "0h 50m"
+  },
+  {
+    "type": "TRIP",
+    "destination": "Phuket International Airport",
+    "outbound": {
+      "flight": "TK172",
+      "departure": "2025-11-14 02:10:00",
+      "arrival": "2025-11-14 11:50:00"
+    },
+    "inbound": {
+      "flight": "TK173",
+      "departure": "2025-11-15 18:25:00",
+      "arrival": "2025-11-16 05:30:00"
+    },
+    "rest_time": "30h 35m"
+  },
+  {
+    "type": "TRIP",
+    "destination": "Munich Franz Josef Strauss Airport",
+    "outbound": {
+      "flight": "TK1629",
+      "departure": "2025-11-18 08:50:00",
+      "arrival": "2025-11-18 11:35:00"
+    },
+    "inbound": {
+      "flight": "TK1630",
+      "departure": "2025-11-18 13:00:00",
+      "arrival": "2025-11-18 15:50:00"
+    },
+    "rest_time": "1h 25m"
+  },
+  {
+    "type": "EVENT",
+    "details": {
+      "flight_number": "HSBY",
+      "departure_airport": "Home",
+      "arrival_airport": "Home",
+      "departure_country": "Unknown",
+      "arrival_country": "Unknown",
+      "departure_time": "2025-11-20 14:29:00",
+      "arrival_time": "2025-11-20 20:29:00",
+      "duration": "6h 0m"
+    }
+  },
+  {
+    "type": "TRIP",
+    "destination": "Velana International Airport",
+    "outbound": {
+      "flight": "TK734",
+      "departure": "2025-11-23 02:35:00",
+      "arrival": "2025-11-23 10:35:00"
+    },
+    "inbound": {
+      "flight": "TK735",
+      "departure": "2025-11-24 19:55:00",
+      "arrival": "2025-11-25 04:40:00"
+    },
+    "rest_time": "33h 20m"
+  },
+  {
+    "type": "TRIP",
+    "destination": "Vnukovo International Airport",
+    "outbound": {
+      "flight": "TK419",
+      "departure": "2025-11-27 02:30:00",
+      "arrival": "2025-11-27 06:25:00"
+    },
+    "inbound": {
+      "flight": "TK420",
+      "departure": "2025-11-28 07:55:00",
+      "arrival": "2025-11-28 12:00:00"
+    },
+    "rest_time": "25h 30m"
+  }
+]
