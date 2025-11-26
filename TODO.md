@@ -1,38 +1,31 @@
-# Nord Dashboard - TODO
+# Nord Dashboard - Roadmap
 
-## High Priority
+## Progression (Completed)
 
-- [ ] **Add Firebase Firestore for Todo Persistence**
+- [x] **Core Architecture**: React + Vite + Tailwind (Nord Theme).
+- [x] **Authentication**: Hybrid Google OAuth2 (Calendar) + Firebase Auth (Identity).
+- [x] **Calendar**: Integrated Google Calendar API (Month & Agenda views).
+- [x] **Tasks**: Implemented real-time Firestore sync for Todos.
+- [x] **Flights**: Built Schedule Widget with Gantt chart & status logic.
+- [x] **Markets**: Added Crypto tracking (Binance + CoinGecko).
+- [x] **Scripture**: Migrated Bible Widget to OpenAI (GPT-4o).
 
-  - Set up Firebase project
-  - Add Firebase SDK to project
-  - Create Firestore database
-  - Implement per-user todo storage (keyed by email from Google auth)
-  - Add Firestore security rules to restrict users to their own data
-  - Update TodoWidget to sync with Firestore instead of localStorage
-  - Add offline support with Firestore's built-in caching
+## Todo
 
-- [ ] **Switch Bible Widget from Gemini to OpenAI**
-  - Replace Gemini API calls with OpenAI API
-  - Update environment variables (VITE_OPENAI_API_KEY)
-  - Test Bible quote generation with GPT-4
-  - Remove Gemini dependencies
+### Refinement & UX
 
-## Medium Priority
+- [ ] **Widget State**: Persist minimized/expanded state of widgets in localStorage.
+- [ ] **Offline Mode**: Improve UI feedback when network is unreachable.
+- [ ] **Mobile View**: Polish responsive layout for smaller screens (currently optimized for desktop).
 
-- [ ] Deploy to production hosting
-- [ ] Add loading states for Firestore operations
-- [ ] Add error handling for network failures
-- [ ] Consider adding Bible widget Firestore persistence for query history
+### New Features
 
-## Low Priority
+- [ ] **Bible History**: Save favorite daily quotes to Firestore.
+- [ ] **Todo Enhancements**: Add drag-and-drop reordering and due dates.
+- [ ] **Flight Notifications**: Email/Push alerts when flight status changes (e.g., "Landing in 30m").
+- [ ] **Weather Details**: Add hourly forecast modal to Weather widget.
 
-- [ ] Add todo categories/tags
-- [ ] Add todo due dates
-- [ ] Add todo priority levels
+### Infrastructure
 
-## Notes
-
-- Current setup uses localStorage (browser-only, no sync)
-- Target: 2 users (you + girlfriend), separate data per user
-- Firebase free tier: 1GB storage, 50K reads/day, 20K writes/day (more than enough)
+- [ ] **Docker**: Containerize the application for easy self-hosting.
+- [ ] **CI/CD**: Set up automated build/test pipeline.
