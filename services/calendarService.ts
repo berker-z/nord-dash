@@ -1,4 +1,5 @@
 import { CalendarEvent } from '../types';
+import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from '../config';
 
 export const listCalendars = async (accessToken: string) => {
   try {
@@ -174,6 +175,67 @@ export const deleteEvent = async (accessToken: string, eventId: string) => {
     return true;
   } catch (error) {
     console.error("Delete Event Error:", error);
+    throw error;
+  }
+};
+
+// --- OAUTH HELPERS FOR "FOREVER ACCESS" ---
+
+export const exchangeCodeForToken = async (code: string) => {
+  try {
+    const params = new URLSearchParams({
+      code: code,
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      redirect_uri: window.location.origin, // Must match the one in Google Console
+      grant_type: 'authorization_code',
+    });
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error_description || 'Failed to exchange code');
+    }
+    
+    return data; // Contains access_token, refresh_token, expires_in, etc.
+  } catch (error) {
+    console.error("Token Exchange Error:", error);
+    throw error;
+  }
+};
+
+export const refreshAccessToken = async (refreshToken: string) => {
+  try {
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    });
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error_description || 'Failed to refresh token');
+    }
+
+    return data; // Contains new access_token, expires_in
+  } catch (error) {
+    console.error("Token Refresh Error:", error);
     throw error;
   }
 };

@@ -4,6 +4,7 @@
 // Read from environment variables (set in .env file)
 // For Vite, environment variables must be prefixed with VITE_
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE";
+export const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || "";
 
 // Parse comma-separated emails from environment variable
 const emailsFromEnv = import.meta.env.VITE_ALLOWED_EMAILS || "";

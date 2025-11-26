@@ -15,20 +15,28 @@ import { TodoItem } from "../types";
  */
 export const subscribeTodos = (
   userEmail: string,
-  callback: (todos: TodoItem[]) => void
+  onData: (todos: TodoItem[]) => void,
+  onError?: (error: any) => void
 ) => {
   const userDocRef = doc(db, "users", userEmail);
 
-  return onSnapshot(userDocRef, (docSnap) => {
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      callback(data.todos || []);
-    } else {
-      // Initialize empty todos for new user
-      setDoc(userDocRef, { todos: [] });
-      callback([]);
+  return onSnapshot(
+    userDocRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        onData(data.todos || []);
+      } else {
+        // Initialize empty todos for new user
+        setDoc(userDocRef, { todos: [] });
+        onData([]);
+      }
+    },
+    (error) => {
+      console.error("Error subscribing to todos:", error);
+      if (onError) onError(error);
     }
-  });
+  );
 };
 
 /**

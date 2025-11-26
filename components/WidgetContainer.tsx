@@ -1,6 +1,6 @@
 import React from "react";
 import { LayoutItem } from "../types";
-import { Minus, Plus, GripVertical } from "lucide-react";
+import { Minus, Plus, GripVertical, ChevronDown } from "lucide-react";
 
 interface WidgetContainerProps {
   item: LayoutItem;
@@ -13,6 +13,8 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
   children,
   onResize,
 }) => {
+  const [isMinimized, setIsMinimized] = React.useState(false);
+
   return (
     <div
       className={`
@@ -24,7 +26,9 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
         overflow-hidden
         hover:border-nord-8 shadow-lg
       `}
-      style={{ paddingBottom: `${item.heightLevel * 200}px` }}
+      style={{
+        paddingBottom: isMinimized ? "0px" : `${item.heightLevel * 200}px`,
+      }}
     >
       {/* Header */}
       <div className="bg-nord-16 px-4 py-3 flex items-center justify-between border-b-2 border-nord-16 select-none">
@@ -33,26 +37,46 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
           {item.title}
         </div>
 
-        {/* Controls - Only Resize */}
+        {/* Controls */}
         <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+          {!isMinimized && (
+            <>
+              <button
+                onClick={() => onResize(-1)}
+                className="p-1 hover:bg-nord-2 rounded hover:text-nord-11 disabled:opacity-30"
+                disabled={item.heightLevel <= 0}
+              >
+                <Minus size={18} />
+              </button>
+              <button
+                onClick={() => onResize(1)}
+                className="p-1 hover:bg-nord-2 rounded hover:text-nord-14 disabled:opacity-30"
+              >
+                <Plus size={18} />
+              </button>
+            </>
+          )}
+
           <button
-            onClick={() => onResize(-1)}
-            className="p-1 hover:bg-nord-2 rounded hover:text-nord-11 disabled:opacity-30"
-            disabled={item.heightLevel <= 0}
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="p-1 hover:bg-nord-2 rounded hover:text-nord-13"
+            title={isMinimized ? "Expand" : "Minimize"}
           >
-            <Minus size={18} />
-          </button>
-          <button
-            onClick={() => onResize(1)}
-            className="p-1 hover:bg-nord-2 rounded hover:text-nord-14 disabled:opacity-30"
-          >
-            <Plus size={18} />
+            {isMinimized ? (
+              <ChevronDown size={18} className="rotate-180" />
+            ) : (
+              <ChevronDown size={18} />
+            )}
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-0 bg-nord-0 relative flex flex-col rounded-b-2xl overflow-hidden">
+      <div
+        className={`flex-1 p-0 bg-nord-0 relative flex flex-col rounded-b-2xl overflow-hidden ${
+          isMinimized ? "hidden" : "flex"
+        }`}
+      >
         <div className="flex-1 overflow-auto p-5">{children}</div>
       </div>
     </div>

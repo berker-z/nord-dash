@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { LayoutItem, WidgetType, WeatherData } from "./types";
 import { WidgetContainer } from "./components/WidgetContainer";
 import { CalendarWidget } from "./components/CalendarWidget";
@@ -7,6 +7,10 @@ import { TodoWidget } from "./components/TodoWidget";
 import { CryptoWidget } from "./components/CryptoWidget";
 import { BibleWidget } from "./components/BibleWidget";
 import { fetchWeather } from "./services/weatherService";
+import {
+  exchangeCodeForToken,
+  refreshAccessToken,
+} from "./services/calendarService";
 import { GOOGLE_CLIENT_ID, ALLOWED_EMAILS } from "./config";
 import {
   Terminal,
@@ -18,6 +22,8 @@ import {
   User,
   Copy,
 } from "lucide-react";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { auth } from "./services/firebase";
 import { ConfirmModal } from "./components/ConfirmModal";
 
 // Declare Google Global for TS
@@ -99,6 +105,9 @@ const App: React.FC = () => {
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const [originUrl, setOriginUrl] = useState("");
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [firebaseAuthError, setFirebaseAuthError] = useState<string | null>(
+    null
+  );
 
   // Clock & Weather Effect
   useEffect(() => {
@@ -136,6 +145,25 @@ const App: React.FC = () => {
       callback: async (response: any) => {
         if (response.access_token) {
           setAccessToken(response.access_token);
+
+          // Sign in to Firebase with the Google Access Token
+          try {
+            const credential = GoogleAuthProvider.credential(
+              null,
+              response.access_token
+            );
+            await signInWithCredential(auth, credential);
+            setFirebaseAuthError(null);
+          } catch (error: any) {
+            console.error("Firebase Auth Error:", error);
+            if (error.code === "auth/invalid-credential") {
+              setFirebaseAuthError(
+                "Project Mismatch: Add Client ID to Firebase Whitelist"
+              );
+            } else {
+              setFirebaseAuthError(error.message);
+            }
+          }
 
           // Fetch User Profile manually since we are using Token Model
           try {
@@ -191,6 +219,15 @@ const App: React.FC = () => {
     return localStorage.getItem("nord_calendar_token");
   });
 
+  const [refreshToken, setRefreshToken] = useState<string | null>(() => {
+    return localStorage.getItem("nord_calendar_refresh_token");
+  });
+
+  const [tokenExpiry, setTokenExpiry] = useState<number | null>(() => {
+    const saved = localStorage.getItem("nord_token_expiry");
+    return saved ? parseInt(saved) : null;
+  });
+
   useEffect(() => {
     if (accessToken) {
       localStorage.setItem("nord_calendar_token", accessToken);
@@ -199,21 +236,114 @@ const App: React.FC = () => {
     }
   }, [accessToken]);
 
+  useEffect(() => {
+    if (refreshToken) {
+      localStorage.setItem("nord_calendar_refresh_token", refreshToken);
+    } else {
+      localStorage.removeItem("nord_calendar_refresh_token");
+    }
+  }, [refreshToken]);
+
+  useEffect(() => {
+    if (tokenExpiry) {
+      localStorage.setItem("nord_token_expiry", tokenExpiry.toString());
+    } else {
+      localStorage.removeItem("nord_token_expiry");
+    }
+  }, [tokenExpiry]);
+
+  // Auto-Refresh Logic
+  useEffect(() => {
+    const checkAndRefreshToken = async () => {
+      if (!refreshToken) return;
+
+      const now = Date.now();
+      // If no token or expired or about to expire (within 5 mins)
+      if (!accessToken || (tokenExpiry && now > tokenExpiry - 5 * 60 * 1000)) {
+        console.log("Token expired or expiring soon, refreshing...");
+        try {
+          const data = await refreshAccessToken(refreshToken);
+          setAccessToken(data.access_token);
+          // Update expiry (expires_in is in seconds)
+          setTokenExpiry(Date.now() + data.expires_in * 1000);
+        } catch (e) {
+          console.error("Failed to auto-refresh token", e);
+          // If refresh fails (e.g. revoked), clear everything
+          setRefreshToken(null);
+          setAccessToken(null);
+          setTokenExpiry(null);
+        }
+      }
+    };
+
+    // Check immediately on load
+    checkAndRefreshToken();
+
+    // Check every minute
+    const interval = setInterval(checkAndRefreshToken, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [refreshToken, accessToken, tokenExpiry]);
+
   const handleCalendarAuth = () => {
     if (!window.google || !window.google.accounts) return;
 
-    const client = window.google.accounts.oauth2.initTokenClient({
+    // Use Code Client for Offline Access (Refresh Token)
+    const client = window.google.accounts.oauth2.initCodeClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: "https://www.googleapis.com/auth/calendar",
-      callback: (response: any) => {
-        if (response.access_token) {
-          setAccessToken(response.access_token);
-          // Optionally set a timer to clear it when it expires (expires_in)
+      ux_mode: "popup",
+      callback: async (response: any) => {
+        if (response.code) {
+          try {
+            const data = await exchangeCodeForToken(response.code);
+            setAccessToken(data.access_token);
+            if (data.refresh_token) {
+              setRefreshToken(data.refresh_token);
+            }
+            setTokenExpiry(Date.now() + data.expires_in * 1000);
+          } catch (e) {
+            console.error("Auth Exchange Failed", e);
+            alert("Failed to connect Google Calendar");
+          }
         }
       },
     });
-    client.requestAccessToken();
+    client.requestCode();
   };
+
+  const isSigningInRef = useRef(false);
+
+  // Sync Firebase Auth with Google Token (Auto-login for existing sessions)
+  useEffect(() => {
+    if (accessToken) {
+      // Check if already signed in or currently signing in to avoid redundant calls
+      if (!auth.currentUser && !isSigningInRef.current) {
+        isSigningInRef.current = true;
+        const credential = GoogleAuthProvider.credential(null, accessToken);
+        signInWithCredential(auth, credential)
+          .then(() => {
+            setFirebaseAuthError(null);
+            isSigningInRef.current = false;
+          })
+          .catch((err) => {
+            isSigningInRef.current = false;
+            console.error("Failed to restore Firebase session:", err);
+            // Ignore duplicate-raw-id error as it means we are likely already signed in or race condition resolved
+            if (err.code === "auth/duplicate-raw-id") {
+              return;
+            }
+
+            if (err.code === "auth/invalid-credential") {
+              setFirebaseAuthError(
+                "Project Mismatch: Add this Client ID to Firebase Console > Auth > Sign-in method > Google > Whitelist"
+              );
+            } else {
+              setFirebaseAuthError(err.message);
+            }
+          });
+      }
+    }
+  }, [accessToken]);
 
   // Layout Management Functions
   const resizeWidget = (
@@ -349,6 +479,14 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* FIREBASE AUTH ERROR BANNER */}
+      {firebaseAuthError && (
+        <div className="bg-red-500/10 border-b border-red-500/20 p-2 text-center text-red-400 text-xs font-mono flex items-center justify-center gap-2">
+          <ShieldAlert size={14} />
+          <span>DATABASE CONNECTION FAILED: {firebaseAuthError}</span>
+        </div>
+      )}
 
       {/* MAIN CONTENT */}
       <main className="flex-1 p-4 md:p-8 relative">

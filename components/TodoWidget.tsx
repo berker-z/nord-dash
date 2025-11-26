@@ -25,11 +25,19 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
 
     setLoading(true);
     hasLoadedFromFirestore.current = false; // Reset when user changes
-    const unsubscribe = subscribeTodos(userEmail, (firestoreTodos) => {
-      setTodos(firestoreTodos);
-      setLoading(false);
-      hasLoadedFromFirestore.current = true; // Mark as loaded
-    });
+    const unsubscribe = subscribeTodos(
+      userEmail,
+      (firestoreTodos) => {
+        setTodos(firestoreTodos);
+        setLoading(false);
+        hasLoadedFromFirestore.current = true; // Mark as loaded
+      },
+      (error) => {
+        console.error("Todo subscription failed:", error);
+        setLoading(false);
+        // We could set an error state here to show in UI
+      }
+    );
 
     return () => unsubscribe();
   }, [userEmail]);
