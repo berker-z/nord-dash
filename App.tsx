@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { LayoutItem, WidgetType, WeatherData } from "./types";
 import { WidgetContainer } from "./components/WidgetContainer";
 import { CalendarWidget } from "./components/CalendarWidget";
-import { ScheduleWidget } from "./components/ScheduleWidget";
 import { TodoWidget } from "./components/TodoWidget";
 import { CryptoWidget } from "./components/CryptoWidget";
 import { BibleWidget } from "./components/BibleWidget";
@@ -71,12 +70,6 @@ const initialLayout: Record<number, LayoutItem[]> = {
     },
   ],
   1: [
-    {
-      id: "w_schedule",
-      type: WidgetType.SCHEDULE,
-      title: "/flight_status",
-      heightLevel: 0,
-    },
     { id: "w3", type: WidgetType.TODO, title: "/system_tasks", heightLevel: 0 },
   ],
   2: [
@@ -380,8 +373,7 @@ const App: React.FC = () => {
             onTokenExpired={() => setAccessToken(null)}
           />
         );
-      case WidgetType.SCHEDULE:
-        return <ScheduleWidget />;
+
       case WidgetType.TODO:
         return <TodoWidget userEmail={user?.email || null} />;
       case WidgetType.CRYPTO:

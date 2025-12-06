@@ -6,7 +6,6 @@
 - [x] **Authentication**: Hybrid Google OAuth2 (Calendar) + Firebase Auth (Identity).
 - [x] **Calendar**: Integrated Google Calendar API (Month & Agenda views).
 - [x] **Tasks**: Implemented real-time Firestore sync for Todos.
-- [x] **Flights**: Built Schedule Widget with Gantt chart & status logic.
 - [x] **Markets**: Added Crypto tracking (Binance + CoinGecko).
 - [x] **Scripture**: Migrated Bible Widget to OpenAI (GPT-4o).
 
@@ -22,7 +21,6 @@
 
 - [ ] **Bible History**: Save favorite daily quotes to Firestore.
 - [ ] **Todo Enhancements**: Add drag-and-drop reordering and due dates.
-- [ ] **Flight Notifications**: Email/Push alerts when flight status changes (e.g., "Landing in 30m").
 - [ ] **Weather Details**: Add hourly forecast modal to Weather widget.
 
 ### Infrastructure

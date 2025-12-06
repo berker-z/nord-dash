@@ -3,8 +3,7 @@ export enum WidgetType {
   AGENDA = 'AGENDA',
   TODO = 'TODO',
   CRYPTO = 'CRYPTO',
-  BIBLE = 'BIBLE',
-  SCHEDULE = 'SCHEDULE'
+  BIBLE = 'BIBLE'
 }
 
 export interface LayoutItem {
@@ -47,35 +46,3 @@ export interface WeatherData {
   temperature: number;
   weatherCode: number;
 }
-
-export interface FlightDetails {
-  flight: string;
-  departure: string;
-  arrival: string;
-}
-
-export interface TripEntry {
-  type: 'TRIP';
-  destination: string;
-  outbound: FlightDetails;
-  inbound: FlightDetails;
-  rest_time: string;
-}
-
-export interface EventDetails {
-  flight_number: string;
-  departure_airport: string;
-  arrival_airport: string;
-  departure_country: string;
-  arrival_country: string;
-  departure_time: string;
-  arrival_time: string;
-  duration: string;
-}
-
-export interface EventEntry {
-  type: 'EVENT' | 'FLIGHT';
-  details: EventDetails;
-}
-
-export type ScheduleEntry = TripEntry | EventEntry;

@@ -6,6 +6,7 @@ import {
   onSnapshot,
   updateDoc,
   deleteDoc,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { TodoItem } from "../types";
@@ -48,24 +49,27 @@ export const saveTodos = async (userEmail: string, todos: TodoItem[]) => {
 };
 
 /**
- * Add a single todo
+ * Add a single todo using a transaction to prevent race conditions
  */
 export const addTodo = async (userEmail: string, todo: TodoItem) => {
   const userDocRef = doc(db, "users", userEmail);
-  const docSnap = await getDoc(userDocRef);
-
-  if (docSnap.exists()) {
-    const currentTodos = docSnap.data().todos || [];
-    await updateDoc(userDocRef, {
-      todos: [...currentTodos, todo],
-    });
-  } else {
-    await setDoc(userDocRef, { todos: [todo] });
-  }
+  
+  await runTransaction(db, async (transaction) => {
+    const docSnap = await transaction.get(userDocRef);
+    
+    if (docSnap.exists()) {
+      const currentTodos = docSnap.data().todos || [];
+      transaction.update(userDocRef, {
+        todos: [...currentTodos, todo],
+      });
+    } else {
+      transaction.set(userDocRef, { todos: [todo] });
+    }
+  });
 };
 
 /**
- * Update a single todo
+ * Update a single todo using a transaction to prevent race conditions
  */
 export const updateTodo = async (
   userEmail: string,
@@ -73,27 +77,33 @@ export const updateTodo = async (
   updates: Partial<TodoItem>
 ) => {
   const userDocRef = doc(db, "users", userEmail);
-  const docSnap = await getDoc(userDocRef);
-
-  if (docSnap.exists()) {
-    const currentTodos: TodoItem[] = docSnap.data().todos || [];
-    const updatedTodos = currentTodos.map((t) =>
-      t.id === todoId ? { ...t, ...updates } : t
-    );
-    await updateDoc(userDocRef, { todos: updatedTodos });
-  }
+  
+  await runTransaction(db, async (transaction) => {
+    const docSnap = await transaction.get(userDocRef);
+    
+    if (docSnap.exists()) {
+      const currentTodos: TodoItem[] = docSnap.data().todos || [];
+      const updatedTodos = currentTodos.map((t) =>
+        t.id === todoId ? { ...t, ...updates } : t
+      );
+      transaction.update(userDocRef, { todos: updatedTodos });
+    }
+  });
 };
 
 /**
- * Delete a single todo
+ * Delete a single todo using a transaction to prevent race conditions
  */
 export const deleteTodo = async (userEmail: string, todoId: string) => {
   const userDocRef = doc(db, "users", userEmail);
-  const docSnap = await getDoc(userDocRef);
-
-  if (docSnap.exists()) {
-    const currentTodos: TodoItem[] = docSnap.data().todos || [];
-    const filteredTodos = currentTodos.filter((t) => t.id !== todoId);
-    await updateDoc(userDocRef, { todos: filteredTodos });
-  }
+  
+  await runTransaction(db, async (transaction) => {
+    const docSnap = await transaction.get(userDocRef);
+    
+    if (docSnap.exists()) {
+      const currentTodos: TodoItem[] = docSnap.data().todos || [];
+      const filteredTodos = currentTodos.filter((t) => t.id !== todoId);
+      transaction.update(userDocRef, { todos: filteredTodos });
+    }
+  });
 };

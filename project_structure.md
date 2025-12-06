@@ -14,7 +14,7 @@ This document provides a comprehensive technical overview of the Nord Dashboard 
 
 ## 1. Project Overview
 
-**Nord Dashboard** is a personal "second brain" web application designed to centralize life management. It features a high-aesthetic "Nord" theme and integrates with multiple external services to track time, tasks, flights, markets, and spiritual reflection.
+**Nord Dashboard** is a personal "second brain" web application designed to centralize life management. It features a high-aesthetic "Nord" theme and integrates with multiple external services to track time, tasks, markets, and spiritual reflection.
 
 ### Technology Stack
 
@@ -33,7 +33,6 @@ This document provides a comprehensive technical overview of the Nord Dashboard 
 │   ├── CalendarWidget.tsx# Google Calendar integration (Month/Agenda views)
 │   ├── ConfirmModal.tsx  # Reusable confirmation dialog
 │   ├── CryptoWidget.tsx  # Crypto market tracker (Binance + CoinGecko)
-│   ├── ScheduleWidget.tsx# Flight/Duty status tracker
 │   ├── TodoWidget.tsx    # Firebase-backed task list
 │   └── WidgetContainer.tsx # Common widget wrapper (window chrome)
 ├── services/             # API Integration Layer
@@ -42,8 +41,6 @@ This document provides a comprehensive technical overview of the Nord Dashboard 
 │   ├── openaiService.ts  # GPT-4o integration
 │   ├── todoService.ts    # Firestore CRUD operations
 │   └── weatherService.ts # OpenMeteo fetcher
-├── flights/              # Static Data
-│   └── *.json            # Flight schedule data files
 ├── App.tsx               # Root component (Layout, Auth, Global State)
 ├── types.ts              # TypeScript interfaces
 ├── config.ts             # Environment configuration
@@ -93,7 +90,6 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 | **Weather**  | Open-Meteo API          | Public (No Key)     | On Load                 |
 | **Crypto**   | Binance API + CoinGecko | Public / API Key    | 15s (Binance), 10m (CG) |
 | **Bible**    | OpenAI API (GPT-4o)     | API Key             | On User Request         |
-| **Flights**  | Local JSON Files        | Static Build        | N/A                     |
 
 ## 5. Component Deep Dive
 
@@ -103,18 +99,6 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 - **Key Logic**:
   - `handleLogin()`: Manages the complex OAuth handshake.
   - `renderWidgetContent()`: Factory function that maps `WidgetType` to actual React components.
-
-### `ScheduleWidget.tsx` (The Status Tracker)
-
-- **Purpose**: Tracks the user's location and duty status based on flight data.
-- **Logic (`getCurrentStatus`)**:
-  - Parses all JSON files in `flights/`.
-  - Compares current time against flight/event windows.
-  - Determines state: `HOME`, `AWAY` (at destination), `FLYING` (in air), or `STANDBY`.
-  - Calculates "Time Until" next event or return home.
-- **Visuals**:
-  - **Widget**: Simple status text + Icon (Cat/Plane/Briefcase).
-  - **Modal**: A custom-built Monthly Gantt chart visualizing trips as colored blocks.
 
 ### `CalendarWidget.tsx` (The Planner)
 
@@ -131,7 +115,7 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 - **Backend**: Firestore collection `users/{email}`.
 - **Data Structure**: `{ todos: [{ id, text, completed }] }`.
 - **Sync**: Uses `onSnapshot` for instant updates across devices.
-- **Safety**: Only writes to DB after initial load to prevent overwriting data with empty state.
+- **Safety**: Uses Firestore transactions to prevent race conditions when multiple operations happen simultaneously.
 
 ### `CryptoWidget.tsx` (The Market Watch)
 
@@ -156,7 +140,7 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 ### `services/todoService.ts`
 
 - **`subscribeTodos`**: Sets up the Firestore listener. Handles creating the user document if it doesn't exist.
-- **`saveTodos`**: Overwrites the `todos` array in the user document (simple but effective for small lists).
+- **`addTodo/updateTodo/deleteTodo`**: Uses Firestore transactions to ensure atomic operations and prevent race conditions.
 
 ### `services/openaiService.ts`
 

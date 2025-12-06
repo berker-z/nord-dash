@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { TodoItem } from "../types";
 import { Trash2, CheckSquare, Square, Plus } from "lucide-react";
-import { subscribeTodos, saveTodos } from "../services/todoService";
+import {
+  subscribeTodos,
+  addTodo,
+  updateTodo,
+  deleteTodo as deleteTodoFromFirestore,
+} from "../services/todoService";
 
 interface TodoWidgetProps {
   userEmail: string | null;
@@ -42,42 +47,56 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
     return () => unsubscribe();
   }, [userEmail]);
 
-  // Save todos to Firestore whenever they change
-  // CRITICAL: Only save after we've loaded initial data from Firestore
-  // This prevents race conditions during login/logout
-  useEffect(() => {
-    // Only save if:
-    // 1. User is logged in (userEmail exists)
-    // 2. Not currently loading from Firestore
-    // 3. We've successfully loaded initial data (prevents saving empty array on mount/logout)
-    if (!userEmail || loading || !hasLoadedFromFirestore.current) {
-      return;
-    }
+  // NOTE: We do NOT auto-save on every todos change.
+  // This prevents race conditions with the real-time subscription.
+  // Instead, we save explicitly in handleAdd, toggleTodo, and deleteTodo.
 
-    // Save the current state to Firestore
-    saveTodos(userEmail, todos);
-  }, [todos, userEmail, loading]);
-
-  const handleAdd = (e?: React.FormEvent) => {
+  const handleAdd = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!input.trim() || !userEmail) return;
+
     const newTodo: TodoItem = {
       id: Date.now().toString(),
       text: input.trim(),
       completed: false,
     };
-    setTodos([...todos, newTodo]);
-    setInput("");
+
+    setInput(""); // Clear input immediately for better UX
+
+    try {
+      await addTodo(userEmail, newTodo);
+      // The real-time subscription will update the UI automatically
+    } catch (error) {
+      console.error("Failed to add todo:", error);
+      // Optionally show an error message to the user
+    }
   };
 
-  const toggleTodo = (id: string) => {
-    setTodos(
-      todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
+  const toggleTodo = async (id: string) => {
+    if (!userEmail) return;
+
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+
+    try {
+      await updateTodo(userEmail, id, { completed: !todo.completed });
+      // The real-time subscription will update the UI automatically
+    } catch (error) {
+      console.error("Failed to toggle todo:", error);
+      // Optionally show an error message to the user
+    }
   };
 
-  const deleteTodo = (id: string) => {
-    setTodos(todos.filter((t) => t.id !== id));
+  const deleteTodo = async (id: string) => {
+    if (!userEmail) return;
+
+    try {
+      await deleteTodoFromFirestore(userEmail, id);
+      // The real-time subscription will update the UI automatically
+    } catch (error) {
+      console.error("Failed to delete todo:", error);
+      // Optionally show an error message to the user
+    }
   };
 
   if (!userEmail) {
