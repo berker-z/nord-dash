@@ -46,3 +46,23 @@ export interface WeatherData {
   temperature: number;
   weatherCode: number;
 }
+
+export interface CalendarConfig {
+  id: string;
+  summary: string;
+  colorId?: string;
+  backgroundColor?: string;
+  foregroundColor?: string;
+  isVisible: boolean;
+  accessRole?: string;
+}
+
+export interface CalendarAccount {
+  email: string;
+  accessToken: string;
+  refreshToken: string; // Critical for offline access
+  expiresAt: number;    // timestamp
+  picture?: string;
+  name?: string;
+  calendars: CalendarConfig[];
+}

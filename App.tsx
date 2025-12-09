@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { LayoutItem, WidgetType, WeatherData } from "./types";
+import { LayoutItem, WidgetType, WeatherData, CalendarAccount } from "./types";
 import { WidgetContainer } from "./components/WidgetContainer";
 import { CalendarWidget } from "./components/CalendarWidget";
 import { TodoWidget } from "./components/TodoWidget";
@@ -7,9 +7,11 @@ import { CryptoWidget } from "./components/CryptoWidget";
 import { BibleWidget } from "./components/BibleWidget";
 import { fetchWeather } from "./services/weatherService";
 import {
-  exchangeCodeForToken,
-  refreshAccessToken,
-} from "./services/calendarService";
+  getConnectedAccounts,
+  handleIdentityLogin,
+  connectCalendarAccount,
+  refreshAccountTokenIfNeeded,
+} from "./services/authService";
 import { GOOGLE_CLIENT_ID, ALLOWED_EMAILS } from "./config";
 import {
   Terminal,
@@ -101,6 +103,9 @@ const App: React.FC = () => {
   const [firebaseAuthError, setFirebaseAuthError] = useState<string | null>(
     null
   );
+  
+  const [calendarAccounts, setCalendarAccounts] = useState<CalendarAccount[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
 
   // Clock & Weather Effect
   useEffect(() => {
@@ -128,215 +133,109 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Google Auth Handler
-  const handleLogin = () => {
-    if (!window.google || !window.google.accounts) return;
-
-    const client = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: "openid email profile https://www.googleapis.com/auth/calendar",
-      callback: async (response: any) => {
-        if (response.access_token) {
-          setAccessToken(response.access_token);
-
-          // Sign in to Firebase with the Google Access Token
-          try {
-            const credential = GoogleAuthProvider.credential(
-              null,
-              response.access_token
-            );
-            await signInWithCredential(auth, credential);
-            setFirebaseAuthError(null);
-          } catch (error: any) {
-            console.error("Firebase Auth Error:", error);
-            if (error.code === "auth/invalid-credential") {
-              setFirebaseAuthError(
-                "Project Mismatch: Add Client ID to Firebase Whitelist"
-              );
-            } else {
-              setFirebaseAuthError(error.message);
-            }
-          }
-
-          // Fetch User Profile manually since we are using Token Model
-          try {
-            const userInfo = await fetch(
-              "https://www.googleapis.com/oauth2/v3/userinfo",
-              {
-                headers: { Authorization: `Bearer ${response.access_token}` },
-              }
-            ).then((res) => res.json());
-
-            if (ALLOWED_EMAILS.includes(userInfo.email)) {
-              setUser({
-                email: userInfo.email,
-                name: userInfo.name,
-                picture: userInfo.picture,
-              });
-              setAuthError(null);
-            } else {
-              setAuthError(`UNAUTHORIZED_USER: ${userInfo.email}`);
-              setAccessToken(null); // Revoke access if unauthorized
-            }
-          } catch (e) {
-            console.error("Failed to fetch user profile", e);
-            setAuthError("LOGIN_FAILED");
-          }
+    // Load Accounts Logic
+    useEffect(() => {
+        if (user) {
+            setLoadingAccounts(true);
+            getConnectedAccounts(user.email).then(accounts => {
+                setCalendarAccounts(accounts);
+                setLoadingAccounts(false);
+            }).catch(e => {
+                console.error("Failed to load calendar accounts", e);
+                setLoadingAccounts(false);
+            });
+        } else {
+            setCalendarAccounts([]);
         }
-      },
-    });
-    client.requestAccessToken();
-  };
+    }, [user]);
 
-  const handleLogout = () => {
+    // Handle Identity Login
+    const handleLogin = async () => {
+        setAuthError(null);
+        try {
+            await handleIdentityLogin();
+            // User state will be updated by onAuthStateChanged/localStorage logic if we wanted, 
+            // but for now we might need to manually set user if we aren't fully relying on onAuthStateChanged yet.
+            // Actually, handleIdentityLogin signs into Firebase.
+            // We should listen to onAuthStateChanged.
+        } catch (e: any) {
+            console.error("Login Failed", e);
+            setAuthError(e.message || "LOGIN_FAILED");
+        }
+    };
+    
+    // Auth State Listener
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+            if (firebaseUser) {
+                if (ALLOWED_EMAILS.includes(firebaseUser.email || "")) {
+                   setUser({
+                       email: firebaseUser.email!,
+                       name: firebaseUser.displayName || "User",
+                       picture: firebaseUser.photoURL || "",
+                   });
+                   setFirebaseAuthError(null);
+                } else {
+                    setUser(null);
+                    setAuthError("UNAUTHORIZED_USER");
+                    auth.signOut();
+                }
+            } else {
+                // Keep local user if we want manual logout, or clear it.
+                // For now, let's trust Firebase status.
+                // setUser(null); 
+                // Wait, existing logic uses localStorage for user. 
+                // Let's stick to existing pattern for now but update it when firebase updates.
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+  const handleLogout = async () => {
+    await auth.signOut();
     setUser(null);
     setAuthError(null);
+    localStorage.removeItem("nord_user");
     if (window.google) {
       window.google.accounts.id.disableAutoSelect();
-      // Re-render button after logout
-      setTimeout(() => {
-        const btnContainer = document.getElementById("googleBtn");
-        if (btnContainer) {
-          window.google.accounts.id.renderButton(btnContainer, {
-            theme: "filled_black",
-            size: "large",
-            shape: "rectangular",
-            width: "240",
-          });
-        }
-      }, 100);
     }
   };
 
-  const [accessToken, setAccessToken] = useState<string | null>(() => {
-    return localStorage.getItem("nord_calendar_token");
-  });
-
-  const [refreshToken, setRefreshToken] = useState<string | null>(() => {
-    return localStorage.getItem("nord_calendar_refresh_token");
-  });
-
-  const [tokenExpiry, setTokenExpiry] = useState<number | null>(() => {
-    const saved = localStorage.getItem("nord_token_expiry");
-    return saved ? parseInt(saved) : null;
-  });
-
+  // Auto-refresh accounts
   useEffect(() => {
-    if (accessToken) {
-      localStorage.setItem("nord_calendar_token", accessToken);
-    } else {
-      localStorage.removeItem("nord_calendar_token");
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (refreshToken) {
-      localStorage.setItem("nord_calendar_refresh_token", refreshToken);
-    } else {
-      localStorage.removeItem("nord_calendar_refresh_token");
-    }
-  }, [refreshToken]);
-
-  useEffect(() => {
-    if (tokenExpiry) {
-      localStorage.setItem("nord_token_expiry", tokenExpiry.toString());
-    } else {
-      localStorage.removeItem("nord_token_expiry");
-    }
-  }, [tokenExpiry]);
-
-  // Auto-Refresh Logic
-  useEffect(() => {
-    const checkAndRefreshToken = async () => {
-      if (!refreshToken) return;
-
-      const now = Date.now();
-      // If no token or expired or about to expire (within 5 mins)
-      if (!accessToken || (tokenExpiry && now > tokenExpiry - 5 * 60 * 1000)) {
-        console.log("Token expired or expiring soon, refreshing...");
-        try {
-          const data = await refreshAccessToken(refreshToken);
-          setAccessToken(data.access_token);
-          // Update expiry (expires_in is in seconds)
-          setTokenExpiry(Date.now() + data.expires_in * 1000);
-        } catch (e) {
-          console.error("Failed to auto-refresh token", e);
-          // If refresh fails (e.g. revoked), clear everything
-          setRefreshToken(null);
-          setAccessToken(null);
-          setTokenExpiry(null);
-        }
-      }
-    };
-
-    // Check immediately on load
-    checkAndRefreshToken();
-
-    // Check every minute
-    const interval = setInterval(checkAndRefreshToken, 60 * 1000);
-    return () => clearInterval(interval);
-  }, [refreshToken, accessToken, tokenExpiry]);
-
-  const handleCalendarAuth = () => {
-    if (!window.google || !window.google.accounts) return;
-
-    // Use Code Client for Offline Access (Refresh Token)
-    const client = window.google.accounts.oauth2.initCodeClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: "https://www.googleapis.com/auth/calendar",
-      ux_mode: "popup",
-      callback: async (response: any) => {
-        if (response.code) {
-          try {
-            const data = await exchangeCodeForToken(response.code);
-            setAccessToken(data.access_token);
-            if (data.refresh_token) {
-              setRefreshToken(data.refresh_token);
-            }
-            setTokenExpiry(Date.now() + data.expires_in * 1000);
-          } catch (e) {
-            console.error("Auth Exchange Failed", e);
-            alert("Failed to connect Google Calendar");
+      const interval = setInterval(() => {
+          if (user && calendarAccounts.length > 0) {
+              // We could implement background refresh here
+              // For now, simpler to refresh on demand in CalendarWidget 
+              // OR we can iterate and refresh all now.
+              // Let's iterate.
+               calendarAccounts.forEach(account => {
+                    refreshAccountTokenIfNeeded(account, user.email).then(token => {
+                        // Update local state if token changed
+                         if (token !== account.accessToken) {
+                             setCalendarAccounts(prev => prev.map(a => 
+                                 a.email === account.email ? { ...a, accessToken: token } : a
+                             ));
+                         }
+                    });
+               });
           }
-        }
-      },
-    });
-    client.requestCode();
-  };
+      }, 5 * 60 * 1000); // Check every 5 mins
+      return () => clearInterval(interval);
+  }, [user, calendarAccounts]);
 
-  const isSigningInRef = useRef(false);
-
-  // Sync Firebase Auth with Google Token (Auto-login for existing sessions)
-  useEffect(() => {
-    if (accessToken) {
-      // Check if already signed in or currently signing in to avoid redundant calls
-      if (!auth.currentUser && !isSigningInRef.current) {
-        isSigningInRef.current = true;
-        const credential = GoogleAuthProvider.credential(null, accessToken);
-        signInWithCredential(auth, credential)
-          .then(() => {
-            setFirebaseAuthError(null);
-            isSigningInRef.current = false;
-          })
-          .catch((err) => {
-            isSigningInRef.current = false;
-            console.error("Failed to restore Firebase session:", err);
-            // Ignore duplicate-raw-id error as it means we are likely already signed in or race condition resolved
-            if (err.code === "auth/duplicate-raw-id") {
-              return;
-            }
-
-            if (err.code === "auth/invalid-credential") {
-              setFirebaseAuthError(
-                "Project Mismatch: Add this Client ID to Firebase Console > Auth > Sign-in method > Google > Whitelist"
-              );
-            } else {
-              setFirebaseAuthError(err.message);
-            }
-          });
-      }
+  const handleConnectCalendar = async () => {
+    if (!user) return;
+    try {
+        await connectCalendarAccount(user.email);
+        // Refresh list
+        const accounts = await getConnectedAccounts(user.email);
+        setCalendarAccounts(accounts);
+    } catch (e) {
+        console.error("Failed to connect calendar", e);
+        alert("Failed to connect calendar");
     }
-  }, [accessToken]);
+  };
 
   // Layout Management Functions
   const resizeWidget = (
@@ -353,24 +252,34 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRefreshAccounts = async () => {
+    if (!user) return;
+    try {
+        const accounts = await getConnectedAccounts(user.email);
+        setCalendarAccounts(accounts);
+    } catch (e) {
+        console.error("Failed to refresh accounts", e);
+    }
+  };
+
   const renderWidgetContent = (type: WidgetType) => {
     switch (type) {
       case WidgetType.CALENDAR:
         return (
           <CalendarWidget
             mode="MONTH"
-            accessToken={accessToken}
-            onConnect={handleCalendarAuth}
-            onTokenExpired={() => setAccessToken(null)}
+            accounts={calendarAccounts}
+            onConnect={handleConnectCalendar}
+            onRefresh={handleRefreshAccounts}
           />
         );
       case WidgetType.AGENDA:
         return (
           <CalendarWidget
             mode="AGENDA"
-            accessToken={accessToken}
-            onConnect={handleCalendarAuth}
-            onTokenExpired={() => setAccessToken(null)}
+            accounts={calendarAccounts}
+            onConnect={handleConnectCalendar}
+            onRefresh={handleRefreshAccounts}
           />
         );
 

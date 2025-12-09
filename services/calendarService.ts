@@ -8,7 +8,7 @@ export const listCalendars = async (accessToken: string) => {
         'Authorization': `Bearer ${accessToken}`,
       },
     });
-    
+
     if (!response.ok) {
       console.error("Failed to list calendars");
       return [];
@@ -23,7 +23,7 @@ export const listCalendars = async (accessToken: string) => {
   }
 };
 
-export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Date): Promise<CalendarEvent[]> => {
+export const listEvents = async (accessToken: string, calendarId: string, timeMin: Date, timeMax: Date): Promise<CalendarEvent[]> => {
   try {
     const params = new URLSearchParams({
       timeMin: timeMin.toISOString(),
@@ -32,8 +32,8 @@ export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Da
       orderBy: 'startTime',
     });
 
-    console.log(`Fetching events from ${timeMin.toISOString()} to ${timeMax.toISOString()}`);
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, {
+    console.log(`Fetching events from ${timeMin.toISOString()} to ${timeMax.toISOString()} for ${calendarId}`);
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },
@@ -54,7 +54,7 @@ export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Da
     return (data.items || []).map((item: any) => {
       const start = item.start.dateTime || item.start.date;
       const dateObj = new Date(start);
-      
+
       // Check if it's an all-day event
       const isAllDay = !item.start.dateTime;
 
@@ -69,13 +69,13 @@ export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Da
 
       // 3. If still nothing, check Description for the first URL that looks like a meeting link
       if (!videoLink && item.description) {
-         const urlRegex = /(https?:\/\/[^\s]+)/g;
-         const urls = item.description.match(urlRegex);
-         if (urls) {
-            videoLink = urls.find((url: string) => url.includes('zoom.us') || url.includes('teams.microsoft') || url.includes('meet.google'));
-         }
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const urls = item.description.match(urlRegex);
+        if (urls) {
+          videoLink = urls.find((url: string) => url.includes('zoom.us') || url.includes('teams.microsoft') || url.includes('meet.google'));
+        }
       }
-      
+
       return {
         id: item.id,
         title: item.summary || '(No Title)',
@@ -99,10 +99,10 @@ export const listEvents = async (accessToken: string, timeMin: Date, timeMax: Da
 
 
 
-export const createEvent = async (accessToken: string, event: any) => {
+export const createEvent = async (accessToken: string, calendarId: string, event: any) => {
   try {
     // conferenceDataVersion=1 is required to create Google Meet links
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -127,9 +127,9 @@ export const createEvent = async (accessToken: string, event: any) => {
   }
 };
 
-export const updateEvent = async (accessToken: string, eventId: string, event: any) => {
+export const updateEvent = async (accessToken: string, calendarId: string, eventId: string, event: any) => {
   try {
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}?conferenceDataVersion=1`, {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}?conferenceDataVersion=1`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -154,9 +154,9 @@ export const updateEvent = async (accessToken: string, eventId: string, event: a
   }
 };
 
-export const deleteEvent = async (accessToken: string, eventId: string) => {
+export const deleteEvent = async (accessToken: string, calendarId: string, eventId: string) => {
   try {
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -203,7 +203,7 @@ export const exchangeCodeForToken = async (code: string) => {
     if (!response.ok) {
       throw new Error(data.error_description || 'Failed to exchange code');
     }
-    
+
     return data; // Contains access_token, refresh_token, expires_in, etc.
   } catch (error) {
     console.error("Token Exchange Error:", error);
