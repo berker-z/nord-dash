@@ -17,6 +17,7 @@ This guide is for anyone (human or AI) working on this project or starting new o
 - **Prefer softer, minimal chrome**: Avoid heavy shadows or thick borders by default; use contrast and subtle accents (e.g., left-color bars) to communicate state without clutter.
 - **Use portals for overlays**: Render modals/overlays via a portal to escape clipping/overflow issues; keep backdrops consistent and non-opaque where possible.
 - **Typography control**: Set the base font size/weight in one place (CSS root) and be deliberate with weight utility classes; avoid accidental boldness on non-primary metadata.
+- **Handle commits/pushes proactively**: When asked to “add/commit/push,” propose or execute the `git add/commit/push` sequence (with permission if needed) instead of deferring to the user.
 
 ## Current Best Practices (Project)
 
