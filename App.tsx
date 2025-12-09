@@ -7,10 +7,7 @@ import { CryptoWidget } from "./components/CryptoWidget";
 import { BibleWidget } from "./components/BibleWidget";
 import { fetchWeather } from "./services/weatherService";
 import {
-  getConnectedAccounts,
   handleIdentityLogin,
-  connectCalendarAccount,
-  refreshAccountTokenIfNeeded,
 } from "./services/authService";
 import { GOOGLE_CLIENT_ID, ALLOWED_EMAILS } from "./config";
 import {
@@ -26,6 +23,7 @@ import {
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { auth } from "./services/firebase";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { useCalendarAccounts } from "./hooks/useCalendarAccounts";
 
 // Declare Google Global for TS
 declare global {
@@ -104,8 +102,15 @@ const App: React.FC = () => {
     null
   );
   
-  const [calendarAccounts, setCalendarAccounts] = useState<CalendarAccount[]>([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const {
+    accounts: calendarAccounts,
+    loading: loadingAccounts,
+    error: calendarAccountError,
+    refreshAccounts: refreshCalendarAccounts,
+    connectAccount: connectCalendarAccount,
+    toggleCalendar: toggleCalendarVisibility,
+    removeAccount: removeCalendarAccount,
+  } = useCalendarAccounts(user?.email || null);
 
   // Clock & Weather Effect
   useEffect(() => {
@@ -132,22 +137,6 @@ const App: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, []);
-
-    // Load Accounts Logic
-    useEffect(() => {
-        if (user) {
-            setLoadingAccounts(true);
-            getConnectedAccounts(user.email).then(accounts => {
-                setCalendarAccounts(accounts);
-                setLoadingAccounts(false);
-            }).catch(e => {
-                console.error("Failed to load calendar accounts", e);
-                setLoadingAccounts(false);
-            });
-        } else {
-            setCalendarAccounts([]);
-        }
-    }, [user]);
 
     // Handle Identity Login
     const handleLogin = async () => {
@@ -201,39 +190,12 @@ const App: React.FC = () => {
     }
   };
 
-  // Auto-refresh accounts
-  useEffect(() => {
-      const interval = setInterval(() => {
-          if (user && calendarAccounts.length > 0) {
-              // We could implement background refresh here
-              // For now, simpler to refresh on demand in CalendarWidget 
-              // OR we can iterate and refresh all now.
-              // Let's iterate.
-               calendarAccounts.forEach(account => {
-                    refreshAccountTokenIfNeeded(account, user.email).then(token => {
-                        // Update local state if token changed
-                         if (token !== account.accessToken) {
-                             setCalendarAccounts(prev => prev.map(a => 
-                                 a.email === account.email ? { ...a, accessToken: token } : a
-                             ));
-                         }
-                    });
-               });
-          }
-      }, 5 * 60 * 1000); // Check every 5 mins
-      return () => clearInterval(interval);
-  }, [user, calendarAccounts]);
-
   const handleConnectCalendar = async () => {
-    if (!user) return;
     try {
-        await connectCalendarAccount(user.email);
-        // Refresh list
-        const accounts = await getConnectedAccounts(user.email);
-        setCalendarAccounts(accounts);
+      await connectCalendarAccount();
     } catch (e) {
-        console.error("Failed to connect calendar", e);
-        alert("Failed to connect calendar");
+      console.error("Failed to connect calendar", e);
+      alert("Failed to connect calendar");
     }
   };
 
@@ -243,22 +205,25 @@ const App: React.FC = () => {
     itemIndex: number,
     change: number
   ) => {
-    const newLayout = { ...layout };
-    const item = newLayout[colIndex][itemIndex];
-    const newHeight = item.heightLevel + change;
-    if (newHeight >= 0) {
-      item.heightLevel = newHeight;
-      setLayout(newLayout);
-    }
+    setLayout((prev) => {
+      const column = prev[colIndex];
+      const item = column[itemIndex];
+      const newHeight = item.heightLevel + change;
+      if (newHeight < 0) return prev;
+
+      const nextColumn = column.map((colItem, idx) =>
+        idx === itemIndex ? { ...colItem, heightLevel: newHeight } : colItem
+      );
+
+      return { ...prev, [colIndex]: nextColumn };
+    });
   };
 
   const handleRefreshAccounts = async () => {
-    if (!user) return;
     try {
-        const accounts = await getConnectedAccounts(user.email);
-        setCalendarAccounts(accounts);
+      await refreshCalendarAccounts();
     } catch (e) {
-        console.error("Failed to refresh accounts", e);
+      console.error("Failed to refresh accounts", e);
     }
   };
 
@@ -271,6 +236,9 @@ const App: React.FC = () => {
             accounts={calendarAccounts}
             onConnect={handleConnectCalendar}
             onRefresh={handleRefreshAccounts}
+            onToggleCalendar={toggleCalendarVisibility}
+            onRemoveAccount={removeCalendarAccount}
+            accountError={calendarAccountError}
           />
         );
       case WidgetType.AGENDA:
@@ -280,6 +248,9 @@ const App: React.FC = () => {
             accounts={calendarAccounts}
             onConnect={handleConnectCalendar}
             onRefresh={handleRefreshAccounts}
+            onToggleCalendar={toggleCalendarVisibility}
+            onRemoveAccount={removeCalendarAccount}
+            accountError={calendarAccountError}
           />
         );
 

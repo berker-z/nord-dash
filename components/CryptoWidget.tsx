@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { CryptoData } from "../types";
 
 const BINANCE_COINS = ["BTC", "ETH", "SOL"];
+// Using process.env to match the original setup that worked for you.
 // @ts-ignore
 const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
 

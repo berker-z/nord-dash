@@ -23,6 +23,8 @@ export interface CalendarEvent {
   time?: string; // HH:MM
   colorId?: string;
   attendees?: { email: string }[];
+  sourceCalendarId?: string;
+  sourceAccountEmail?: string;
 }
 
 export interface TodoItem {

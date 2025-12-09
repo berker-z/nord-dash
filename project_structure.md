@@ -28,24 +28,35 @@ This document provides a comprehensive technical overview of the Nord Dashboard 
 
 ```
 /
-├── components/           # UI Widgets and shared components
-│   ├── BibleWidget.tsx   # OpenAI-powered daily scripture
-│   ├── CalendarWidget.tsx# Google Calendar integration (Month/Agenda views)
-│   ├── ConfirmModal.tsx  # Reusable confirmation dialog
-│   ├── CryptoWidget.tsx  # Crypto market tracker (Binance + CoinGecko)
-│   ├── TodoWidget.tsx    # Firebase-backed task list
-│   └── WidgetContainer.tsx # Common widget wrapper (window chrome)
-├── services/             # API Integration Layer
-│   ├── calendarService.ts# Google Calendar API & Auth helpers
-│   ├── firebase.ts       # Firebase App & Firestore init
-│   ├── openaiService.ts  # GPT-4o integration
-│   ├── todoService.ts    # Firestore CRUD operations
-│   └── weatherService.ts # OpenMeteo fetcher
-├── App.tsx               # Root component (Layout, Auth, Global State)
-├── types.ts              # TypeScript interfaces
-├── config.ts             # Environment configuration
-├── tailwind.config.js    # Design system (Nord palette)
-└── vite.config.ts        # Build configuration
+├── components/                 # UI Widgets and shared components
+│   ├── BibleWidget.tsx         # OpenAI-powered daily scripture
+│   ├── CalendarWidget.tsx      # Calendar shell using hooks + subcomponents
+│   ├── ConfirmModal.tsx        # Reusable confirmation dialog
+│   ├── CryptoWidget.tsx        # Crypto market tracker (Binance + CoinGecko)
+│   ├── TodoWidget.tsx          # Firebase-backed task list
+│   ├── WidgetContainer.tsx     # Common widget wrapper (window chrome)
+│   └── calendar/               # Calendar-only UI pieces
+│       ├── AccountModal.tsx    # Account list, visibility toggles, disconnect
+│       ├── AgendaView.tsx      # Agenda (today) view
+│       ├── EventDetailModal.tsx# Event details with join/delete/edit actions
+│       ├── EventFormModal.tsx  # Create/edit event form (account locked on edit)
+│       ├── EventItem.tsx       # Standard event row styling
+│       └── MonthGrid.tsx       # Month grid with day popover + account button
+├── hooks/
+│   ├── useCalendarAccounts.ts  # Loads/refreshes account list and visibility toggles
+│   └── useCalendarEvents.ts    # Fetches events for agenda/month ranges
+├── services/                   # API Integration Layer
+│   ├── calendarService.ts      # Re-exports googleCalendarClient
+│   ├── googleCalendarClient.ts # Calendar API calls (list/create/update/delete)
+│   ├── firebase.ts             # Firebase App & Firestore init
+│   ├── openaiService.ts        # GPT-4o integration
+│   ├── todoService.ts          # Firestore CRUD operations
+│   └── weatherService.ts       # OpenMeteo fetcher
+├── App.tsx                     # Root component (Layout, Auth, Global State)
+├── types.ts                    # TypeScript interfaces
+├── config.ts                   # Environment configuration
+├── tailwind.config.js          # Design system (Nord palette)
+└── vite.config.ts              # Build configuration
 ```
 
 ## 3. Authentication Architecture
@@ -55,22 +66,23 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 ### The Flow
 
 1.  **Trigger**: User clicks "Sign in with Google".
-2.  **Google OAuth**: `App.tsx` initializes `google.accounts.oauth2.initTokenClient`.
-    - **Scope**: `openid email profile https://www.googleapis.com/auth/calendar`
-    - **Response**: Returns an `access_token` from Google.
+2.  **Google OAuth**: `App.tsx` calls `handleIdentityLogin` (code client).
+    - **Scope**: `openid email profile https://www.googleapis.com/auth/calendar`.
+    - **Response**: Returns an auth `code`, exchanged for `access_token`, `refresh_token`, `expires_in`.
+    - **Whitelist**: Email is checked against `ALLOWED_EMAILS` before signing into Firebase.
 3.  **Firebase Sign-In**:
     - The app creates a `GoogleAuthProvider.credential` using the Google `access_token`.
     - It calls `signInWithCredential(auth, credential)` to authenticate with Firebase.
     - **Why?** This allows the app to use Firebase Security Rules for Firestore (Todos) while keeping the Google Token for Calendar API calls.
 4.  **Session Management**:
-    - **Google Token**: Stored in `localStorage` (`nord_calendar_token`). Auto-refreshes 5 minutes before expiry using a stored `refresh_token`.
-    - **Firebase Session**: Managed automatically by the Firebase SDK.
+    - **Calendar Tokens**: Stored per account in Firestore at `users/{ownerEmail}/calendarAccounts/{accountEmail}` (`accessToken`, `refreshToken`, `expiresAt`, calendars[]). `useCalendarAccounts` refreshes tokens 5 minutes before expiry.
+    - **Firebase Session**: Managed automatically by the Firebase SDK; logout calls `auth.signOut()` and clears local user state.
 
-### Token Refresh Logic (`App.tsx` & `calendarService.ts`)
+### Token Refresh Logic (`useCalendarAccounts` + `authService`)
 
-- The app requests "offline access" to get a `refresh_token`.
-- A background interval checks token expiry every minute.
-- If expired/expiring, `refreshAccessToken()` hits `https://oauth2.googleapis.com/token` to get a fresh access token without user intervention.
+- The code client requests offline access; the first consent yields a `refresh_token`.
+- `useCalendarAccounts` runs a 5-minute interval to refresh each account via `authService.refreshAccountTokenIfNeeded` (uses Google token endpoint and client secret from `config.ts`).
+- Tokens are persisted back to Firestore so other devices can reuse them without re-consent.
 
 ## 4. Data Architecture
 
@@ -80,6 +92,7 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 - **`layout`**: Grid configuration for widgets (Column/Order/Height).
 - **`weather`**: Current temperature and weather code.
 - **`currentTime`**: Ticks every second for clock display.
+- **`calendarAccounts`**: Loaded via `useCalendarAccounts`; includes tokens, calendars, and visibility.
 
 ### Remote Data Sources
 
@@ -99,6 +112,8 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 - **Key Logic**:
   - `handleLogin()`: Manages the complex OAuth handshake.
   - `renderWidgetContent()`: Factory function that maps `WidgetType` to actual React components.
+  - Calendar state: delegates account loading/refresh/toggle to `useCalendarAccounts`, passes actions down to widgets.
+  - Layout resize: immutable updates per column item.
 
 ### `CalendarWidget.tsx` (The Planner)
 
@@ -106,9 +121,11 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
   - `AGENDA`: Shows today's events list.
   - `MONTH`: Full monthly calendar grid.
 - **Features**:
-  - **CRUD**: Create, Read, Update, Delete events directly from the UI.
+  - **CRUD**: Create, Read, Update, Delete events via `EventFormModal`/`EventDetailModal`.
   - **Meeting Links**: Auto-detects Zoom/Meet/Teams links and shows a "Join" button.
-  - **Styling**: Maps Google Calendar `colorId` to Nord theme colors (e.g., Tasks = Green, Events = Blue).
+  - **Styling**: Maps accounts to Nord colors (index 0=blue, 1=green, 2+=red); `EventItem` standardizes rows.
+  - **Subcomponents**: `AgendaView`, `MonthGrid`, `AccountModal`, `EventItem`, `EventFormModal`, `EventDetailModal`.
+  - **Data**: Uses `useCalendarEvents` for per-mode event ranges; receives account actions from `App`.
 
 ### `TodoWidget.tsx` (The Task Manager)
 
@@ -123,6 +140,7 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
   - **Binance**: Fetches `BTC`, `ETH`, `SOL` prices (fast updates).
   - **CoinGecko**: Fetches "Market Dominance", "Milady Cult Coin", and NFT floor prices (slower updates to avoid rate limits).
 - **Display**: Shows Price + 24h % Change with color coding (Green/Red).
+- **Config**: Uses `COINGECKO_API_KEY` from `process.env` to set `x-cg-demo-api-key`; skips CoinGecko fetch if missing.
 
 ### `BibleWidget.tsx` (The Reflector)
 
@@ -133,9 +151,14 @@ The application uses a **Hybrid Authentication Flow** combining Google OAuth2 fo
 
 ### `services/calendarService.ts`
 
-- **`listEvents`**: Fetches events for a time range. Handles `conferenceData` and description parsing to find video links.
-- **`exchangeCodeForToken`**: Swaps the initial auth code for long-lived tokens.
-- **`createEvent/updateEvent`**: Supports adding Google Meet links via `conferenceDataVersion=1`.
+- Re-exports the functions from `googleCalendarClient` for compatibility.
+
+### `services/googleCalendarClient.ts`
+
+- **`listCalendars`**: Lists calendars for the authorized user.
+- **`listEvents`**: Fetches events for a time range; parses conferenceData/location/description for meeting links; maps to `CalendarEvent` with `colorId` and `isTimeSpecific`.
+- **`createEvent/updateEvent`**: Supports Google Meet links via `conferenceDataVersion=1`.
+- **`deleteEvent`**: Deletes events by id.
 
 ### `services/todoService.ts`
 
@@ -164,6 +187,7 @@ Defines the **Nord Palette** as a custom color extension:
 - `VITE_FIREBASE_*`: For Firestore/Auth.
 - `VITE_OPENAI_API_KEY`: For Bible widget.
 - `COINGECKO_API_KEY`: For crypto data.
+- `VITE_GOOGLE_CLIENT_SECRET` (used in auth token exchange).
 
 ---
 

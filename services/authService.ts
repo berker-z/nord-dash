@@ -9,7 +9,8 @@ import {
     query,
     where,
     getDocs,
-    deleteDoc
+    deleteDoc,
+    runTransaction
 } from "firebase/firestore";
 import { signInWithCredential, GoogleAuthProvider, signOut } from "firebase/auth";
 import { CalendarAccount, CalendarConfig } from "../types";
@@ -216,6 +217,27 @@ export const updateAccountToken = async (userEmail: string, accountEmail: string
 
 export const updateAccountCalendars = async (userEmail: string, accountEmail: string, calendars: CalendarConfig[]) => {
     await updateDoc(getAccountRef(userEmail, accountEmail), { calendars });
+};
+
+export const toggleCalendarVisibility = async (
+    userEmail: string,
+    accountEmail: string,
+    calendarId: string
+) => {
+    await runTransaction(db, async (transaction) => {
+        const accountRef = getAccountRef(userEmail, accountEmail);
+        const snap = await transaction.get(accountRef);
+        if (!snap.exists()) return;
+
+        const currentCalendars: CalendarConfig[] = snap.data().calendars || [];
+        const updated = currentCalendars.map((cal) =>
+            cal.id === calendarId
+                ? { ...cal, isVisible: cal.isVisible === false ? true : false }
+                : cal
+        );
+
+        transaction.update(accountRef, { calendars: updated });
+    });
 };
 
 export const removeCalendarAccount = async (userEmail: string, accountEmail: string) => {

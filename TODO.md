@@ -1,29 +1,20 @@
-# Nord Dashboard - Roadmap
+# TODO
 
-## Progression (Completed)
+## In Progress / Next
 
-- [x] **Core Architecture**: React + Vite + Tailwind (Nord Theme).
-- [x] **Authentication**: Hybrid Google OAuth2 (Calendar) + Firebase Auth (Identity).
-- [x] **Calendar**: Integrated Google Calendar API (Month & Agenda views).
-- [x] **Tasks**: Implemented real-time Firestore sync for Todos.
-- [x] **Markets**: Added Crypto tracking (Binance + CoinGecko).
-- [x] **Scripture**: Migrated Bible Widget to OpenAI (GPT-4o).
+- [ ] URGENT: Remove Tailwind CDN usage; ensure styles come from the built Tailwind pipeline.
+- [ ] Introduce shared UI frames (`WidgetFrame`, `ModalFrame`) and migrate widgets/modals for consistency.
+- [x] Update `calendars.md` after refactors.
 
-## Todo
+## Completed (current pass)
 
-### Refinement & UX
-
-- [ ] **Widget State**: Persist minimized/expanded state of widgets in localStorage.
-- [ ] **Offline Mode**: Improve UI feedback when network is unreachable.
-- [ ] **Mobile View**: Polish responsive layout for smaller screens (currently optimized for desktop).
-
-### New Features
-
-- [ ] **Bible History**: Save favorite daily quotes to Firestore.
-- [ ] **Todo Enhancements**: Add drag-and-drop reordering and due dates.
-- [ ] **Weather Details**: Add hourly forecast modal to Weather widget.
-
-### Infrastructure
-
-- [ ] **Docker**: Containerize the application for easy self-hosting.
-- [ ] **CI/CD**: Set up automated build/test pipeline.
+- [x] Centralized Google Calendar API client (`services/googleCalendarClient.ts`) and removed duplicate token helpers.
+- [x] Stabilized calendar account actions (owner email prop, Firestore toggle/remove helpers).
+- [x] Guarded CoinGecko config via Vite env (`VITE_COINGECKO_API_KEY`).
+- [x] Made widget resize updates immutable to prevent layout state mutation.
+- [x] Added `useCalendarEvents` hook and moved `CalendarWidget` event fetching onto it.
+- [x] Extracted calendar modals/list items into dedicated components to reduce `CalendarWidget` size.
+- [x] Added `useCalendarAccounts` hook and wired `App` + `CalendarWidget` to centralized account actions.
+- [x] Split Calendar agenda/month rendering into dedicated subcomponents with inline account error banner.
+- [x] Expanded calendar color mapping to cycle Nord Aurora/Frost colors across up to 6 accounts.
+- [x] Updated `project_structure.md` to current architecture.
