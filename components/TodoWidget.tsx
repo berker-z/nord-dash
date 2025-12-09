@@ -139,7 +139,7 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
                 className={`${
                   todo.completed
                     ? "text-nord-3 line-through"
-                    : "text-nord-5 font-medium"
+                    : "text-nord-5 font-normal"
                 }`}
               >
                 {todo.text}

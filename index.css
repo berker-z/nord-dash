@@ -1,28 +1,66 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html {
-  font-size: 16px; /* Base font size for scaling */
-}
-body {
-  background-color: #2e3440;
-  color: #eceff4;
+:root {
+  --surface-base: #2e3440;
+  --surface-muted: #1e2a3a;
+  --surface-subtle: #3b4252;
+  --text-primary: #eceff4;
+  --text-subtle: #d8dee9;
+  --accent-ice: #88c0d0;
+  --accent-aurora: #bf616a;
+  --accent-amber: #d08770;
+  --border-strong: #4c566a;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  color-scheme: dark;
   font-family: "JetBrains Mono", monospace;
 }
-/* Custom scrollbar for brutalist look */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #2e3440;
-  border-left: 1px solid #4c566a;
-}
-::-webkit-scrollbar-thumb {
-  background: #4c566a;
-  border: 1px solid #2e3440;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #88c0d0;
+
+@layer base {
+  * {
+    border-color: var(--border-strong);
+  }
+
+  html {
+    font-size: 17px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--surface-base);
+    color: var(--text-primary);
+    font-family: "JetBrains Mono", monospace;
+    min-height: 100vh;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--accent-ice);
+    color: var(--surface-base);
+  }
+
+  /* Custom scrollbar for brutalist look */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--surface-base);
+    border-left: 1px solid var(--border-strong);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border: 1px solid var(--surface-base);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-ice);
+  }
 }

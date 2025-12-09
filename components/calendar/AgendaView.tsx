@@ -47,7 +47,7 @@ export const AgendaView: React.FC<Props> = ({
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+      <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-w-3xl w-full mx-auto">
         {error && (
           <div className="text-nord-11 border border-nord-11 bg-nord-11/10 p-2 rounded text-sm text-center mb-2">
             ! {error} !

@@ -13,6 +13,10 @@ export default {
       fontFamily: {
         mono: ['"JetBrains Mono"', "monospace"],
       },
+      borderRadius: {
+        frame: "18px",
+        modal: "26px",
+      },
       colors: {
         nord: {
           0: "#2E3440", // Polar Night (Darkest)

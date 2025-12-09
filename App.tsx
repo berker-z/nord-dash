@@ -272,7 +272,9 @@ const App: React.FC = () => {
   };
 
   const Separator = () => (
-    <span className="hidden md:inline text-nord-3 font-normal mx-2">::</span>
+    <span className="hidden md:inline text-nord-3/70 mx-1 select-none leading-none">
+      ::
+    </span>
   );
 
   return (

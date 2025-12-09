@@ -2,12 +2,18 @@
 
 ## In Progress / Next
 
-- [ ] URGENT: Remove Tailwind CDN usage; ensure styles come from the built Tailwind pipeline.
-- [ ] Introduce shared UI frames (`WidgetFrame`, `ModalFrame`) and migrate widgets/modals for consistency.
-- [x] Update `calendars.md` after refactors.
+- [ ] Add calendar selection on create + refresh calendar metadata periodically.
+- [ ] Surface per-account re-auth UX when token refresh fails.
+- [ ] Commit and push latest fixes/refactors.
 
 ## Completed (current pass)
 
+- [x] Removed Tailwind CDN usage; styles now flow through the built Tailwind pipeline (`index.css` import in `index.tsx`).
+- [x] Introduced shared UI frames (`WidgetFrame`, `ModalFrame`) and migrated widgets/modals for consistency.
+- [x] Authored design system doc (`design.md`) and centralized base tokens (colors, shadows, radii) in Tailwind + `index.css`.
+- [x] Update `calendars.md` after refactors.
+- [x] Added shared checkbox component and applied it to calendar subcalendars + Google Meet toggle.
+- [x] Softened widget title icon styling (removed pill background) to match lighter chrome.
 - [x] Centralized Google Calendar API client (`services/googleCalendarClient.ts`) and removed duplicate token helpers.
 - [x] Stabilized calendar account actions (owner email prop, Firestore toggle/remove helpers).
 - [x] Guarded CoinGecko config via Vite env (`VITE_COINGECKO_API_KEY`).

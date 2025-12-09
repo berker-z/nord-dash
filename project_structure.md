@@ -35,6 +35,10 @@ This document provides a comprehensive technical overview of the Nord Dashboard 
 │   ├── CryptoWidget.tsx        # Crypto market tracker (Binance + CoinGecko)
 │   ├── TodoWidget.tsx          # Firebase-backed task list
 │   ├── WidgetContainer.tsx     # Common widget wrapper (window chrome)
+│   ├── ui/                     # Shared primitives
+│   │   ├── ModalFrame.tsx      # Portal-based modal shell
+│   │   ├── WidgetFrame.tsx     # Shared widget chrome
+│   │   └── Checkbox.tsx        # Todo-style checkbox used across the app
 │   └── calendar/               # Calendar-only UI pieces
 │       ├── AccountModal.tsx    # Account list, visibility toggles, disconnect
 │       ├── AgendaView.tsx      # Agenda (today) view

@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { AlertTriangle } from "lucide-react";
+import { ModalFrame } from "./ui/ModalFrame";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -22,45 +23,19 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = "Cancel",
   isDestructive = false,
 }) => {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onCancel();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen, onCancel]);
-
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in"
-      onClick={onCancel}
-    >
-      <div
-        className="bg-nord-0 border-2 border-nord-11 w-full max-w-sm p-6 rounded-xl shadow-2xl relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 mb-4 text-nord-11 border-b border-nord-11/30 pb-2">
-          <AlertTriangle size={24} />
-          <h3 className="text-lg font-bold uppercase tracking-wider">
-            {title}
-          </h3>
-        </div>
-
-        <p className="text-nord-4 mb-8 text-sm leading-relaxed font-mono">
-          {message}
-        </p>
-
-        <div className="flex justify-end gap-3">
+    <ModalFrame
+      title={title}
+      icon={<AlertTriangle size={20} />}
+      tone={isDestructive ? "danger" : "info"}
+      size="sm"
+      onClose={onCancel}
+      hideHeader
+      bodyClassName="space-y-4 text-sm leading-relaxed"
+      footer={
+        <>
           <button
             onClick={onCancel}
             className="px-4 py-2 text-nord-4 hover:text-nord-6 transition-colors font-mono text-sm uppercase tracking-wider"
@@ -77,8 +52,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           >
             {confirmText}
           </button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <p className="font-mono text-nord-4">{message}</p>
+    </ModalFrame>
   );
 };

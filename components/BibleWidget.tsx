@@ -43,7 +43,7 @@ export const BibleWidget: React.FC = () => {
         </div>
       ) : (
         <div className="flex-1 flex flex-col animate-fade-in overflow-y-auto">
-          <div className="bg-nord-1 p-6 rounded-lg border-l-4 border-nord-13 mb-4 relative shadow-lg">
+          <div className="bg-nord-1 p-6 rounded-lg border-l-4 border-nord-13 mb-4 relative">
             <h3 className="text-nord-8 font-medium text-base mb-3 uppercase tracking-wider border-b border-nord-2 pb-1 inline-block">
               {quote.reference}
             </h3>
