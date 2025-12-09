@@ -4,7 +4,6 @@ import {
   getConnectedAccounts,
   connectCalendarAccount,
   refreshAccountTokenIfNeeded,
-  toggleCalendarVisibility,
   removeCalendarAccount,
 } from "../services/authService";
 
@@ -14,7 +13,6 @@ interface Result {
   error: string | null;
   refreshAccounts: () => Promise<void>;
   connectAccount: () => Promise<void>;
-  toggleCalendar: (accountEmail: string, calendarId: string) => Promise<void>;
   removeAccount: (accountEmail: string) => Promise<void>;
 }
 
@@ -75,15 +73,6 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     await refreshAccounts();
   }, [userEmail, refreshAccounts]);
 
-  const toggleCalendar = useCallback(
-    async (accountEmail: string, calendarId: string) => {
-      if (!userEmail) return;
-      await toggleCalendarVisibility(userEmail, accountEmail, calendarId);
-      await refreshAccounts();
-    },
-    [userEmail, refreshAccounts]
-  );
-
   const removeAccount = useCallback(
     async (accountEmail: string) => {
       if (!userEmail) return;
@@ -99,7 +88,6 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     error,
     refreshAccounts,
     connectAccount,
-    toggleCalendar,
     removeAccount,
   };
 };

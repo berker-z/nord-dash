@@ -64,3 +64,36 @@
     background: var(--accent-ice);
   }
 }
+
+@layer components {
+  .text-nav {
+    @apply text-nord-4 text-sm md:text-base font-normal;
+  }
+  .text-section {
+    @apply text-lg text-nord-6 font-normal;
+  }
+  .text-card-title {
+    @apply text-base text-nord-5 font-normal;
+  }
+  .text-body {
+    @apply text-nord-4 font-normal;
+  }
+  .text-body-sm {
+    @apply text-sm text-nord-4 font-normal;
+  }
+  .text-muted {
+    @apply text-nord-3 font-normal;
+  }
+  .text-muted-sm {
+    @apply text-xs text-nord-3 font-normal;
+  }
+  .text-label {
+    @apply text-xs uppercase tracking-wider text-nord-3 font-normal;
+  }
+  .text-meta {
+    @apply text-sm uppercase tracking-widest text-nord-3 font-normal;
+  }
+  .text-heading-quiet {
+    @apply text-nord-8 font-normal;
+  }
+}

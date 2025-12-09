@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { CalendarEvent } from "../../types";
 import { Plus, Clock } from "lucide-react";
 import { EventItem } from "./EventItem";
@@ -20,10 +20,21 @@ export const AgendaView: React.FC<Props> = ({
   onRefresh,
   onSelectEvent,
 }) => {
+  const sortedEvents = [...todayEvents].sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      onRefresh();
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [onRefresh]);
+
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4 pb-2 border-b-2 border-nord-1 flex justify-between items-center">
-        <span className="text-nord-8 font-medium text-sm uppercase tracking-widest">
+        <span className="text-meta text-nord-8">
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
@@ -58,7 +69,7 @@ export const AgendaView: React.FC<Props> = ({
             SYNCING_DATA...
           </div>
         ) : todayEvents.length > 0 ? (
-          todayEvents.map((evt) => (
+          sortedEvents.map((evt) => (
             <EventItem key={evt.id} evt={evt} onClick={() => onSelectEvent(evt)} />
           ))
         ) : (

@@ -121,11 +121,11 @@ export const CryptoWidget: React.FC = () => {
   return (
     <div className="flex flex-col font-mono">
       <div className="flex justify-between items-end mb-6 text-sm text-nord-3 border-b-2 border-nord-1 pb-2">
-        <span>LAST_SYNC: {lastUpdated.toLocaleTimeString()}</span>
+        <span className="text-muted-sm">LAST_SYNC: {lastUpdated.toLocaleTimeString()}</span>
         <button
           onClick={handleManualRefresh}
           disabled={loading}
-          className="flex items-center gap-1 hover:text-nord-8 transition-colors disabled:opacity-50 uppercase font-medium"
+          className="flex items-center gap-1 hover:text-nord-8 transition-colors disabled:opacity-50 uppercase text-muted"
         >
           [{loading ? "SYNCING..." : "REFRESH"}]
         </button>
@@ -141,25 +141,25 @@ export const CryptoWidget: React.FC = () => {
             >
               <div className="flex items-center gap-4">
                 <div>
-                  <div className="font-medium leading-none text-nord-4 tracking-wider">
+                  <div className="leading-none text-card-title tracking-wider">
                     {item.symbol}
                   </div>
                   {/* Show /USDT only for Binance coins for consistency, or just hide it for others */}
                   {BINANCE_COINS.includes(item.symbol) && (
-                    <div className="text-xs text-nord-3 mt-1 font-medium">
+                    <div className="text-muted-sm mt-1">
                       /USDT
                     </div>
                   )}
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-medium text-nord-6">
+                <div className="text-card-title text-nord-6">
                   {BINANCE_COINS.includes(item.symbol)
                     ? `$${item.price}`
                     : item.price}
                 </div>
                 <div
-                  className={`font-medium flex items-center justify-end gap-2 ${
+                  className={`flex items-center justify-end gap-2 ${
                     isPositive ? "text-nord-14" : "text-nord-11"
                   }`}
                 >
@@ -174,7 +174,7 @@ export const CryptoWidget: React.FC = () => {
           );
         })}
         {allData.length === 0 && !loading && (
-          <div className="text-nord-11 text-lg text-center mt-10 font-medium">
+          <div className="text-nord-11 text-lg text-center mt-10">
             ! CONNECTION_ERROR !
           </div>
         )}

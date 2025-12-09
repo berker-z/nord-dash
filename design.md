@@ -2,11 +2,11 @@
 
 ## Visual Language
 - Palette: Nord blues/auroras defined in `tailwind.config.js` as `nord-0`…`nord-16`; CSS vars mirror key surfaces (`--surface-base`, `--surface-muted`, `--text-primary`, `--accent-ice`, `--accent-aurora`).
-- Typography: JetBrains Mono (300–700) loaded in `index.css`; base font size 17px (`html`), default weight 400. Titles use wider tracking (e.g., widget headers `tracking-[0.16em]`) with natural casing. Avoid unintended bold; reserve 500–700 only for emphasis/CTAs.
+ - Typography: JetBrains Mono (300–700) loaded in `index.css`; base font size 17px (`html`), default weight 400. Titles use wider tracking (e.g., widget headers `tracking-[0.16em]`) with natural casing. No bold/semibold anywhere except the calendar day numbers in the month grid; keep everything else at the default weight.
 - Surfaces: Defaults live in `index.css` (`body` on `--surface-base` with `color-scheme: dark`). Use `bg-nord-0/90` + `border-nord-16` for panels, header bars match border color (`bg-nord-16`) with slim padding, and `backdrop-blur-md` for glass.
 - Radii: `rounded-frame` (18px) for widgets, `rounded-modal` (26px) for overlays. **No drop shadows**; depth comes from borders/contrast only.
 - Borders/Outlines: `border-2 border-nord-16` is the default rail; info tone uses `border-nord-9/50`, danger uses `border-nord-11/50`. Use `focus:ring-nord-9` for inputs. Event cards use a thin neutral border with a left accent bar for account color.
-- Checkboxes: use the shared `Checkbox` component (`components/ui/Checkbox.tsx`) which matches the todo-list aesthetic (unchecked: light square outline, checked: green check square). Apply it everywhere instead of native checkbox styling (calendar subcalendars, Google Meet toggle, etc.).
+- Checkboxes: use the shared `Checkbox` component (`components/ui/Checkbox.tsx`) which matches the todo-list aesthetic (unchecked: light square outline, checked: green check square). Apply it everywhere instead of native checkbox styling (e.g., Google Meet toggle).
 
 ## Primitives
 - `components/ui/WidgetFrame.tsx`
@@ -23,6 +23,8 @@
 - Keep base tokens in `index.css`; prefer Nord palette utilities or the CSS vars instead of ad-hoc hex values.
 - For widget chrome: `WidgetFrame` + Nord borders (no shadows); avoid recreating per-widget headers.
 - For dialogs: `ModalFrame` with `tone` set to the intent; place primary action in `footer`, keep body content lightweight and scroll-friendly.
+- Connected Accounts modal: no card backgrounds; accounts render as a flat list with thin separators (mirrors the todo list). Remove status pills/extra labels; show only the email with a white disconnect icon that turns red on hover (no hover fill).
+- Typography utilities live in `index.css` (`@layer components`): `text-nav`, `text-section`, `text-card-title`, `text-body`, `text-body-sm`, `text-muted`, `text-muted-sm`, `text-label`, `text-meta`, `text-heading-quiet`. Use these instead of inline weights. **Only calendar day numbers in the month grid should be bold/medium; everything else stays at the default weight.**
 
 ## Handy Tokens
 - Backgrounds: `bg-nord-0/90`, `bg-nord-16/30` (headers), `bg-nord-1/60` (cards), `bg-nord-0/60` (badges).

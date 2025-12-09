@@ -26,7 +26,7 @@ export const EventItem: React.FC<Props> = ({ evt, onClick }) => {
     >
       <div className={`absolute inset-y-3 left-2 w-1 rounded-full ${accent} opacity-80`} />
       <div className="flex justify-between items-center mb-1 pl-2">
-        <span className="font-medium text-nord-5">{evt.title}</span>
+        <span className="text-card-title">{evt.title}</span>
         <span className="text-base font-mono text-nord-6">
           {evt.time}
         </span>

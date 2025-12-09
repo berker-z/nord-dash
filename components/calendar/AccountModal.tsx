@@ -2,13 +2,11 @@ import React, { useState } from "react";
 import { CalendarAccount } from "../../types";
 import { Plus, LogOut, Users, X } from "lucide-react";
 import { ModalFrame } from "../ui/ModalFrame";
-import { Checkbox } from "../ui/Checkbox";
 
 interface Props {
   accounts: CalendarAccount[];
   onClose: () => void;
   onConnect: () => void;
-  onToggleCalendar: (accountEmail: string, calendarId: string) => void;
   onRemoveAccount: (accountEmail: string) => void;
 }
 
@@ -16,13 +14,12 @@ export const AccountModal: React.FC<Props> = ({
   accounts,
   onClose,
   onConnect,
-  onToggleCalendar,
   onRemoveAccount,
 }) => {
   return (
     <ModalFrame
       title="Connected Accounts"
-      subtitle="Toggle calendars or disconnect access"
+      subtitle="Manage which calendars are connected"
       icon={<Users size={18} />}
       tone="info"
       size="md"
@@ -35,14 +32,14 @@ export const AccountModal: React.FC<Props> = ({
             onConnect();
             onClose();
           }}
-          className="w-full sm:w-auto sm:min-w-[14rem] py-3 px-4 bg-nord-9 text-nord-0 font-bold rounded-lg transition-colors hover:bg-nord-8 flex items-center justify-center gap-2"
+          className="w-full sm:w-auto sm:min-w-[12rem] py-2.5 px-4 bg-nord-9 text-nord-0 rounded-lg transition-colors hover:bg-nord-8 flex items-center justify-center gap-2 tracking-tight"
         >
-          <Plus size={18} /> CONNECT ANOTHER ACCOUNT
+          <Plus size={18} /> Add account
         </button>
       }
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 text-nord-8 font-semibold">
+        <div className="flex items-center gap-2 text-nord-8">
           <Users size={18} /> Connected Accounts
         </div>
         <button
@@ -57,57 +54,33 @@ export const AccountModal: React.FC<Props> = ({
       {accounts.length === 0 ? (
         <div className="text-nord-3 text-sm">No accounts connected.</div>
       ) : (
-        accounts.map((acc) => (
-          <div
-            key={acc.email}
-            className="bg-nord-1/60 p-3 rounded-lg border border-nord-3/80"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3 min-w-0">
+        <div className="divide-y divide-nord-1/80">
+          {accounts.map((acc) => {
+            return (
+              <div key={acc.email} className="py-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                 <Avatar
                   src={acc.picture}
-                  alt={acc.name}
-                  fallback={acc.name?.[0] || acc.email[0].toUpperCase()}
+                  alt={acc.email}
+                  fallback={acc.email[0].toUpperCase()}
                 />
                 <div className="min-w-0">
-                  <div className="text-base font-medium text-nord-5 truncate">
-                    {acc.name || acc.email}
+                    <div className="text-card-title truncate">
+                      {acc.email}
+                    </div>
                   </div>
-                  <div className="text-xs text-nord-3 truncate">
-                    {acc.email}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-[11px] text-nord-13 flex items-center gap-1 px-2 py-1 rounded-full bg-nord-0/60 border border-nord-3">
-                  <div className="w-2 h-2 rounded-full bg-nord-14 animate-pulse"></div>
-                  Active
                 </div>
                 <button
                   onClick={() => onRemoveAccount(acc.email)}
-                  className="p-1.5 text-nord-3 hover:text-nord-11 hover:bg-nord-0 rounded transition-colors"
-                  title="Disconnect Account"
+                  className="p-2 text-nord-6 hover:text-nord-11 transition-colors"
+                  title="Disconnect account"
                 >
-                  <LogOut size={14} />
+                  <LogOut size={18} />
                 </button>
               </div>
-            </div>
-            <div className="pl-12 space-y-2 border-t border-nord-2 pt-3 mt-2">
-              {acc.calendars.map((cal) => (
-                <div key={cal.id} className="flex items-center gap-3 text-sm text-nord-4">
-                  <Checkbox
-                    checked={cal.isVisible !== false}
-                    onChange={() => onToggleCalendar(acc.email, cal.id)}
-                    aria-label={`Toggle ${cal.summary}`}
-                  />
-                  <span className={cal.isVisible === false ? "opacity-40" : ""}>
-                    {cal.summary}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))
+            );
+          })}
+        </div>
       )}
     </ModalFrame>
   );
@@ -133,7 +106,7 @@ const Avatar: React.FC<{ src?: string; alt?: string; fallback: string }> = ({
   }
 
   return (
-    <div className="w-10 h-10 rounded-full bg-nord-3 flex items-center justify-center text-nord-6 font-bold text-lg border border-nord-1">
+    <div className="w-10 h-10 rounded-full bg-nord-3 flex items-center justify-center text-nord-6 text-lg border border-nord-1">
       {fallback}
     </div>
   );

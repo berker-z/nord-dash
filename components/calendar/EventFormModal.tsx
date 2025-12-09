@@ -38,10 +38,11 @@ export const EventFormModal: React.FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const defaultAccount = accounts[0];
-  const defaultCalendarId =
-    defaultAccount?.calendars?.find(
-      (c) => c.accessRole === "owner" || c.accessRole === "writer"
-    )?.id || "primary";
+  const getPrimaryCalendarId = (account?: CalendarAccount) =>
+    account?.calendars?.find((c) => c.primary || c.id === account.email || c.id === "primary")?.id ||
+    account?.calendars?.[0]?.id ||
+    "primary";
+  const defaultCalendarId = getPrimaryCalendarId(defaultAccount);
 
   const [selectedAccountEmail, setSelectedAccountEmail] = useState<string>(
     (initialEvent as any)?.sourceAccountEmail || defaultAccount?.email || ""
@@ -71,14 +72,14 @@ export const EventFormModal: React.FC<Props> = ({
   useEffect(() => {
     const account = accounts.find((a) => a.email === selectedAccountEmail);
     if (account) {
-      const calExists = account.calendars.some((c) => c.id === selectedCalendarId);
+      const calExists = (account.calendars || []).some(
+        (c) => c.id === selectedCalendarId
+      );
       if (!calExists) {
-        const def =
-          account.calendars.find(
-            (c) => c.accessRole === "owner" || c.accessRole === "writer"
-          )?.id || "primary";
-        setSelectedCalendarId(def);
+        setSelectedCalendarId(getPrimaryCalendarId(account));
       }
+    } else if (accounts[0]) {
+      setSelectedCalendarId(getPrimaryCalendarId(accounts[0]));
     }
   }, [selectedAccountEmail, accounts, selectedCalendarId]);
 
@@ -102,6 +103,7 @@ export const EventFormModal: React.FC<Props> = ({
       alert("Please select a valid account");
       return;
     }
+    const targetCalendarId = getPrimaryCalendarId(account);
 
     setIsSubmitting(true);
     try {
@@ -146,12 +148,12 @@ export const EventFormModal: React.FC<Props> = ({
       if (initialEvent) {
         await updateEvent(
           account.accessToken,
-          selectedCalendarId,
+          targetCalendarId,
           initialEvent.id,
           eventBody
         );
       } else {
-        await createEvent(account.accessToken, selectedCalendarId, eventBody);
+        await createEvent(account.accessToken, targetCalendarId, eventBody);
       }
 
       onSuccess();
@@ -178,7 +180,7 @@ export const EventFormModal: React.FC<Props> = ({
       bodyClassName="space-y-4"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="text-nord-8 font-semibold">
+        <div className="text-nord-8">
           {initialEvent ? "Edit Event" : "New Event"}
         </div>
         <button
@@ -342,7 +344,7 @@ export const EventFormModal: React.FC<Props> = ({
           <button
             type="submit"
             disabled={isSubmitting || !title}
-            className={`px-6 py-2 rounded font-bold text-nord-1 transition-colors bg-nord-9 hover:bg-nord-9/80 disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`px-6 py-2 rounded text-nord-1 transition-colors bg-nord-9 hover:bg-nord-9/80 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isSubmitting ? "Saving..." : "Save"}
           </button>

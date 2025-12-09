@@ -17,16 +17,16 @@
 - API calls live in `services/googleCalendarClient.ts` (list/create/update/delete events, list calendars); `calendarService.ts` re-exports for compatibility.
 - Events are fetched via `useCalendarEvents`:
   - Mode-sensitive ranges: today (AGENDA) or month range (MONTH).
-  - Filters by calendar `isVisible !== false`.
+  - Primary-only: each account is normalized to its primary calendar (`normalizeToPrimaryCalendar` in `authService`); sub-calendars are ignored.
   - Enriches events with `sourceCalendarId` and `sourceAccountEmail`.
   - Color mapping cycles Nord palette per account index: `["9","2","11","12","13","14","15"]` (supports 6+ accounts).
 - `CalendarWidget` is composed of subcomponents:
-  - `AgendaView` (today list), `MonthGrid` (month grid + day popover), `AccountModal` (visibility toggles, disconnect), `EventFormModal` (create/edit), `EventDetailModal`, `EventItem`.
-  - Account actions (`connect`, `toggle calendar visibility`, `remove`) are passed down from `App` via `useCalendarAccounts`.
+  - `AgendaView` (today list), `MonthGrid` (month grid + day popover), `AccountModal` (disconnect + Add Account), `EventFormModal` (create/edit), `EventDetailModal`, `EventItem`.
+  - Account actions (`connect`, `remove`) are passed down from `App` via `useCalendarAccounts`.
   - Account error banner shown inline if account load/refresh fails.
 - Event creation/editing:
   - Account selection allowed when creating; locked when editing.
-  - Calendar selection defaults to the first writable calendar; selection UI is not exposed (known gap).
+  - Calendar target is always the primary calendar for the chosen account.
   - Google Meet links supported via `conferenceDataVersion=1`; attendees supported.
 
 ### Todo/Other Widgets (for context)
@@ -41,7 +41,7 @@
 - Calendar UI decomposed into reusable subcomponents; agenda/month modes share the same data hook.
 
 ## Gaps / Risks
-- No explicit calendar picker in the event form; calendar defaults to first writable and is locked on edit—cannot move events between calendars.
+- Primary-only calendar sync; reintroducing sub-calendar support would need new UI and data handling.
 - Calendar list in Firestore is only loaded at connect time; no periodic `listCalendars` refresh to pick up new calendars or role changes.
 - Account errors surface inline but are generic; no per-account re-auth prompt.
 - Tailwind still pulled via CDN in HTML (separate infra task).

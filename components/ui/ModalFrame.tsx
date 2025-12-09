@@ -115,7 +115,7 @@ export const ModalFrame: React.FC<ModalFrameProps> = ({
                 )}
                 <div className="min-w-0">
                   <h3
-                    className={`text-sm md:text-base font-semibold ${toneClass.accent} truncate`}
+                    className={`text-sm md:text-base ${toneClass.accent} truncate`}
                   >
                     {title}
                   </h3>

@@ -57,7 +57,7 @@ export const WidgetFrame: React.FC<WidgetFrameProps> = ({
               {badge}
             </div>
             {(subtitle || meta) && (
-              <div className="flex items-center gap-3 text-xs text-nord-3 font-medium">
+              <div className="flex items-center gap-3 text-muted-sm">
                 {subtitle && <span className="truncate">{subtitle}</span>}
                 {subtitle && meta && <span className="text-nord-3/60">•</span>}
                 {meta && <span className="truncate">{meta}</span>}

@@ -4,15 +4,11 @@ import {
     setDoc,
     getDoc,
     updateDoc,
-    arrayUnion,
     collection,
-    query,
-    where,
     getDocs,
-    deleteDoc,
-    runTransaction
+    deleteDoc
 } from "firebase/firestore";
-import { signInWithCredential, GoogleAuthProvider, signOut } from "firebase/auth";
+import { signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import { CalendarAccount, CalendarConfig } from "../types";
 import { GOOGLE_CLIENT_ID, ALLOWED_EMAILS } from "../config";
 import { listCalendars } from "./calendarService";
@@ -32,6 +28,22 @@ interface TokenResponse {
 const getDocRef = (email: string) => doc(db, "users", email);
 const getAccountRef = (userEmail: string, accountEmail: string) =>
     doc(db, "users", userEmail, "calendarAccounts", accountEmail);
+
+const normalizeToPrimaryCalendar = (calendars: CalendarConfig[], accountEmail?: string): CalendarConfig[] => {
+    if (!calendars || calendars.length === 0) return [];
+    const primary =
+        calendars.find((cal) => cal.primary) ||
+        calendars.find((cal) => cal.id === accountEmail) ||
+        calendars.find((cal) => cal.id === "primary") ||
+        calendars[0];
+    return [
+        {
+            ...primary,
+            primary: true,
+            isVisible: true,
+        },
+    ];
+};
 
 // --- Core Auth Logic ---
 
@@ -177,6 +189,7 @@ const saveCalendarAccount = async (
             backgroundColor: c.backgroundColor,
             foregroundColor: c.foregroundColor,
             accessRole: c.accessRole,
+            primary: !!c.primary || c.id === "primary",
             isVisible: true, // Default to visible
         }));
     } catch (e) {
@@ -190,7 +203,7 @@ const saveCalendarAccount = async (
         expiresAt: Date.now() + (tokens.expires_in * 1000),
         name: profile.name,
         picture: profile.picture,
-        calendars: calendars
+        calendars: normalizeToPrimaryCalendar(calendars, accountEmail)
     };
 
     // If we are updating an existing account and missing a refresh token in the response,
@@ -208,7 +221,10 @@ const saveCalendarAccount = async (
 export const getConnectedAccounts = async (userEmail: string): Promise<CalendarAccount[]> => {
     const accountsRef = collection(db, "users", userEmail, "calendarAccounts");
     const snapshot = await getDocs(accountsRef);
-    return snapshot.docs.map(d => d.data() as CalendarAccount);
+    return snapshot.docs.map(d => {
+        const data = d.data() as CalendarAccount;
+        return { ...data, calendars: normalizeToPrimaryCalendar(data.calendars || [], data.email) };
+    });
 };
 
 export const updateAccountToken = async (userEmail: string, accountEmail: string, newData: Partial<CalendarAccount>) => {
@@ -216,28 +232,7 @@ export const updateAccountToken = async (userEmail: string, accountEmail: string
 }
 
 export const updateAccountCalendars = async (userEmail: string, accountEmail: string, calendars: CalendarConfig[]) => {
-    await updateDoc(getAccountRef(userEmail, accountEmail), { calendars });
-};
-
-export const toggleCalendarVisibility = async (
-    userEmail: string,
-    accountEmail: string,
-    calendarId: string
-) => {
-    await runTransaction(db, async (transaction) => {
-        const accountRef = getAccountRef(userEmail, accountEmail);
-        const snap = await transaction.get(accountRef);
-        if (!snap.exists()) return;
-
-        const currentCalendars: CalendarConfig[] = snap.data().calendars || [];
-        const updated = currentCalendars.map((cal) =>
-            cal.id === calendarId
-                ? { ...cal, isVisible: cal.isVisible === false ? true : false }
-                : cal
-        );
-
-        transaction.update(accountRef, { calendars: updated });
-    });
+    await updateDoc(getAccountRef(userEmail, accountEmail), { calendars: normalizeToPrimaryCalendar(calendars, accountEmail) });
 };
 
 export const removeCalendarAccount = async (userEmail: string, accountEmail: string) => {

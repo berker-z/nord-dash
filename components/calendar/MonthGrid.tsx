@@ -115,7 +115,7 @@ export const MonthGrid: React.FC<Props> = ({
 
       <div className="grid grid-cols-7 mb-2 text-center">
         {["MO", "TU", "WE", "TH", "FR", "SA", "SU"].map((d, i) => (
-          <span key={i} className="text-sm text-nord-3 font-medium uppercase">
+          <span key={i} className="text-sm text-nord-3 uppercase">
             {d}
           </span>
         ))}
@@ -134,7 +134,7 @@ export const MonthGrid: React.FC<Props> = ({
           bodyClassName="space-y-3"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="text-nord-8 font-semibold">
+            <div className="text-nord-8">
               Events [{selectedDayEvents[0].date.toLocaleDateString()}]
             </div>
             <div className="flex items-center gap-2">

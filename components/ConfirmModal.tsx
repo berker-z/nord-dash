@@ -44,7 +44,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </button>
           <button
             onClick={onConfirm}
-            className={`px-6 py-2 rounded font-bold text-nord-1 transition-colors font-mono text-sm uppercase tracking-wider ${
+            className={`px-6 py-2 rounded text-nord-1 transition-colors font-mono text-sm uppercase tracking-wider ${
               isDestructive
                 ? "bg-nord-11 hover:bg-nord-11/80"
                 : "bg-nord-9 hover:bg-nord-9/80"

@@ -16,7 +16,6 @@ interface CalendarWidgetProps {
   accounts: CalendarAccount[];
   onConnect: () => void;
   onRefresh: () => void;
-  onToggleCalendar: (accountEmail: string, calendarId: string) => Promise<void>;
   onRemoveAccount: (accountEmail: string) => Promise<void>;
   accountError?: string | null;
 }
@@ -26,7 +25,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   accounts,
   onConnect,
   onRefresh,
-  onToggleCalendar,
   onRemoveAccount,
   accountError,
 }) => {
@@ -50,18 +48,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-
-  const toggleCalendarVisibility = async (
-    accountEmail: string,
-    calendarId: string
-  ) => {
-    try {
-      await onToggleCalendar(accountEmail, calendarId);
-      onRefresh();
-    } catch (e) {
-      console.error("Failed to toggle visibility", e);
-    }
-  };
 
   const handleRemoveAccount = async (accountEmail: string) => {
     if (!confirm(`Are you sure you want to disconnect ${accountEmail}?`)) return;
@@ -144,10 +130,10 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
         <div className="text-nord-3 opacity-50">
           <CalendarIcon size={48} />
         </div>
-        <div className="text-nord-4 font-medium">SYNC_REQUIRED</div>
+        <div className="text-nord-4">SYNC_REQUIRED</div>
         <button
           onClick={onConnect}
-          className="bg-nord-3 hover:bg-nord-9 hover:text-nord-1 text-nord-6 px-4 py-2 rounded transition-colors uppercase tracking-wider text-sm font-bold"
+          className="bg-nord-3 hover:bg-nord-9 hover:text-nord-1 text-nord-6 px-4 py-2 rounded transition-colors uppercase tracking-wider text-sm"
         >
           [ CONNECT_GOOGLE_CAL ]
         </button>
@@ -255,7 +241,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           accounts={accounts}
           onClose={() => setIsAccountsModalOpen(false)}
           onConnect={onConnect}
-          onToggleCalendar={toggleCalendarVisibility}
           onRemoveAccount={handleRemoveAccount}
         />
       )}

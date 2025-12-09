@@ -108,7 +108,6 @@ const App: React.FC = () => {
     error: calendarAccountError,
     refreshAccounts: refreshCalendarAccounts,
     connectAccount: connectCalendarAccount,
-    toggleCalendar: toggleCalendarVisibility,
     removeAccount: removeCalendarAccount,
   } = useCalendarAccounts(user?.email || null);
 
@@ -236,7 +235,6 @@ const App: React.FC = () => {
             accounts={calendarAccounts}
             onConnect={handleConnectCalendar}
             onRefresh={handleRefreshAccounts}
-            onToggleCalendar={toggleCalendarVisibility}
             onRemoveAccount={removeCalendarAccount}
             accountError={calendarAccountError}
           />
@@ -248,7 +246,6 @@ const App: React.FC = () => {
             accounts={calendarAccounts}
             onConnect={handleConnectCalendar}
             onRefresh={handleRefreshAccounts}
-            onToggleCalendar={toggleCalendarVisibility}
             onRemoveAccount={removeCalendarAccount}
             accountError={calendarAccountError}
           />
@@ -283,7 +280,7 @@ const App: React.FC = () => {
       <header className="p-4 border-b-2 border-nord-16 bg-nord-0/80 backdrop-blur-lg sticky top-0 z-40">
         <div className="flex items-center justify-between max-w-[1600px] mx-auto">
           <div className="hidden md:flex items-center gap-4">
-            <div className="flex items-center gap-2 text-nord-8 font-medium tracking-tighter text-lg">
+            <div className="flex items-center gap-2 text-heading-quiet tracking-tighter text-lg">
               <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
               <span>THE WIRED // v1</span>
             </div>
@@ -293,19 +290,19 @@ const App: React.FC = () => {
           <div className="flex items-center text-lg w-full md:w-auto justify-between md:justify-end">
             {/* Desktop Info Group */}
             <div className="hidden md:flex items-center">
-              <div className="text-nord-4 font-normal">
+              <div className="text-nav">
                 {currentTime.toLocaleTimeString("en-US", { hour12: false })}
               </div>
 
               <Separator />
 
-              <div className="text-nord-4 font-normal">
+              <div className="text-nav">
                 {currentTime.toLocaleDateString()}
               </div>
 
               <Separator />
 
-              <div className="text-nord-4 font-normal uppercase">ISTANBUL</div>
+              <div className="text-nav uppercase">ISTANBUL</div>
 
               <Separator />
             </div>
@@ -313,7 +310,7 @@ const App: React.FC = () => {
             {/* Weather (Always Visible) */}
             <div className="flex items-center gap-2">
               {weather ? (
-                <div className="flex items-center gap-2 font-medium text-nord-6">
+                <div className="flex items-center gap-2 text-nord-6">
                   {getWeatherIcon(weather.weatherCode)}
                   <span>{weather.temperature}°C</span>
                 </div>
@@ -343,9 +340,9 @@ const App: React.FC = () => {
             `}
             >
               {user ? (
-                <span className="uppercase font-medium text-sm">LOGOUT</span>
+                <span className="uppercase text-sm">LOGOUT</span>
               ) : (
-                <span className="uppercase font-medium text-sm flex items-center gap-2">
+                <span className="uppercase text-sm flex items-center gap-2">
                   <Lock size={14} /> LOCKED
                 </span>
               )}
@@ -371,11 +368,11 @@ const App: React.FC = () => {
             <div className="w-full max-w-md bg-nord-0 border-2 border-nord-3 rounded-2xl shadow-2xl overflow-hidden">
               {/* Header */}
               <div className="bg-nord-1 px-6 py-4 border-b-2 border-nord-3 flex items-center justify-between">
-                <div className="flex items-center gap-3 text-nord-4 font-medium text-lg tracking-widest font-mono">
-                  <Lock size={20} className="text-nord-9" />
-                  SYSTEM ACCESS
-                </div>
+              <div className="flex items-center gap-3 text-nav text-lg tracking-widest font-mono">
+                <Lock size={20} className="text-nord-9" />
+                SYSTEM ACCESS
               </div>
+            </div>
 
               {/* Body */}
               <div className="p-8 flex flex-col items-center text-center">
@@ -383,7 +380,7 @@ const App: React.FC = () => {
                   <User size={48} />
                 </div>
 
-                <h2 className="text-lg font-medium text-nord-6 mb-2">
+                <h2 className="text-section mb-2">
                   Welcome Back
                 </h2>
                 <p className="text-nord-4 mb-8 text-sm leading-relaxed opacity-80 max-w-xs">
@@ -392,7 +389,7 @@ const App: React.FC = () => {
                 </p>
 
                 {authError && (
-                  <div className="mb-6 p-3 w-full border border-nord-11 bg-nord-11/10 text-nord-11 text-xs font-bold uppercase font-mono rounded">
+                  <div className="mb-6 p-3 w-full border border-nord-11 bg-nord-11/10 text-nord-11 text-xs uppercase font-mono rounded">
                     ! {authError} !
                   </div>
                 )}
@@ -401,7 +398,7 @@ const App: React.FC = () => {
                 <button
                   onClick={handleLogin}
                   disabled={!isGoogleLoaded}
-                  className="w-full py-3 px-4 bg-nord-3 hover:bg-nord-9 hover:text-nord-1 text-nord-6 font-bold rounded-lg transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 bg-nord-3 hover:bg-nord-9 hover:text-nord-1 text-nord-6 rounded-lg transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {!isGoogleLoaded ? (
                     <span className="animate-pulse">INITIALIZING...</span>
@@ -423,7 +420,7 @@ const App: React.FC = () => {
 
             {/* Developer Helper: Origin Display */}
             <div className="mt-8 w-full max-w-md border border-nord-3 bg-nord-1 p-4 rounded font-mono text-xs opacity-50 hover:opacity-100 transition-opacity">
-              <div className="text-nord-8 font-bold mb-2 uppercase tracking-wider flex items-center gap-2">
+              <div className="text-heading-quiet mb-2 uppercase tracking-wider flex items-center gap-2">
                 <Terminal size={14} /> Dev_Mode: OAuth Config
               </div>
               <p className="text-nord-4 mb-2">
@@ -465,7 +462,7 @@ const App: React.FC = () => {
                 </div>
               ))}
               {layout[colIndex].length === 0 && (
-                <div className="h-32 border-2 border-dashed border-nord-3 rounded flex items-center justify-center text-nord-3 text-sm uppercase select-none font-medium">
+                <div className="h-32 border-2 border-dashed border-nord-3 rounded flex items-center justify-center text-muted text-sm uppercase select-none">
                   [ EMPTY COLUMN ]
                 </div>
               )}

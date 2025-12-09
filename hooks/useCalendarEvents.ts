@@ -60,28 +60,32 @@ export const useCalendarEvents = ({ accounts, mode, currentDate }: Options) => {
     accounts.forEach((account, accountIndex) => {
       const colorId = accountColors[accountIndex % accountColors.length];
 
-      account.calendars
-        .filter((cal) => cal.isVisible !== false)
-        .forEach((cal) => {
-          fetchPromises.push(
-            listEvents(account.accessToken, cal.id, start, end)
-              .then((evts) => {
-                const enriched = evts.map((e) => ({
-                  ...e,
-                  colorId,
-                  sourceCalendarId: cal.id,
-                  sourceAccountEmail: account.email,
-                })) as CalendarEvent[];
-                allEvents.push(...enriched);
-              })
-              .catch((err) => {
-                console.error(
-                  `Failed to fetch for ${account.email} / ${cal.id}`,
-                  err
-                );
-              })
-          );
-        });
+      const calendars = account.calendars || [];
+      const primaryCalendar =
+        calendars.find((cal) => cal.primary || cal.id === "primary") ||
+        calendars.find((cal) => cal.id === account.email) ||
+        calendars[0];
+
+      if (!primaryCalendar) return;
+
+      fetchPromises.push(
+        listEvents(account.accessToken, primaryCalendar.id, start, end)
+          .then((evts) => {
+            const enriched = evts.map((e) => ({
+              ...e,
+              colorId,
+              sourceCalendarId: primaryCalendar.id,
+              sourceAccountEmail: account.email,
+            })) as CalendarEvent[];
+            allEvents.push(...enriched);
+          })
+          .catch((err) => {
+            console.error(
+              `Failed to fetch for ${account.email} / ${primaryCalendar.id}`,
+              err
+            );
+          })
+      );
     });
 
     try {

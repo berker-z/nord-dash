@@ -56,6 +56,7 @@ export interface CalendarConfig {
   backgroundColor?: string;
   foregroundColor?: string;
   isVisible: boolean;
+  primary?: boolean;
   accessRole?: string;
 }
 
