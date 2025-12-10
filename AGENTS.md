@@ -12,27 +12,14 @@ This guide is for anyone (human or AI) working on this project or starting new o
 - **Composability without overengineering**: Build base components (e.g., widget frame, modal frame) and extend them with props; don’t create needless abstractions for one-off layouts.
 - **No redundancy**: Avoid duplicate helpers (e.g., token exchange) and repeated UI patterns—factor them out once and reuse.
 - **Consistency in design**: Shared provenance for text styles, colors, borders, radius. Widgets, modals, and overlays should feel coherent and derive from the same base tokens.
-- **Document as you go**: Keep architecture docs (project_structure.md, calendars.md) current. Add a design document when visual language evolves.
+- **Document as you go**: Keep architecture docs current. Add a design document when visual language evolves.
 - **Shared primitives over per-screen tweaks**: Use a single modal frame (with portal + optional header), checkbox, and frame component across the app; tune variants via props instead of forking styles.
-- **Prefer softer, minimal chrome**: Avoid heavy shadows or thick borders by default; use contrast and subtle accents (e.g., left-color bars) to communicate state without clutter.
 - **Use portals for overlays**: Render modals/overlays via a portal to escape clipping/overflow issues; keep backdrops consistent and non-opaque where possible.
 - **Typography control**: Set the base font size/weight in one place (CSS root) and be deliberate with weight utility classes; avoid accidental boldness on non-primary metadata.
 - **Handle commits/pushes proactively**: When asked to “add/commit/push,” propose or execute the `git add/commit/push` sequence (with permission if needed) instead of deferring to the user.
 
-## Current Best Practices (Project)
-
-- **Calendar architecture**:
-  - Auth via Google OAuth code client; whitelist check precedes Firebase sign-in.
-  - Per-account tokens in Firestore with scheduled refresh; event data enriched with source metadata.
-  - UI decomposed into `AgendaView`, `MonthGrid`, `AccountModal`, `EventFormModal`, `EventDetailModal`, `EventItem`; colors cycle through Nord palette for multiple accounts.
-  - Event editing keeps the account/calendar locked (no moves); creation defaults to first writable calendar, add selection on create only.
-- **Services & hooks**:
-  - Calendar API isolated in `googleCalendarClient` and re-exported; token logic lives in `authService` + `useCalendarAccounts`.
-  - Event fetching lives in `useCalendarEvents`, scoped by mode and date range.
-  - Todos use Firestore transactions; crypto uses Binance + CoinGecko with keyed requests; Bible uses OpenAI with JSON-only responses.
 - **UI scaffolding**:
   - Use shared frames for widgets/modals (WidgetFrame/ModalFrame) to keep chrome consistent; modals portal to body.
-  - Shared `Checkbox` component mirrors todo aesthetic; reuse everywhere instead of native styling.
   - Keep layout tweaks at the edge: extend base components with inline props rather than duplicating containers.
 - **Styling pipeline**:
   - Use the built Tailwind pipeline; remove CDN usage. Centralize tokens (colors, spacing, radii) and avoid per-file ad-hoc styles.
@@ -61,10 +48,3 @@ This guide is for anyone (human or AI) working on this project or starting new o
 - Ad-hoc styles or inline magic numbers for colors/radii not tied to tokens.
 - UI divergence (different modals/frames) when a shared base is intended.
 - Client-side secrets scattered across files.
-
-## Next Reminders
-
-- Remove Tailwind CDN; rely on compiled Tailwind.
-- Finish shared WidgetFrame/ModalFrame and migrate widgets/modals.
-- Add calendar selection on create; keep edit locked.
-- Keep Firestore rules in-repo; keep docs aligned with code.
