@@ -1,6 +1,6 @@
 # Agents Guide: Principles & Practices
 
-1. As you create a project, create three files: `design.md` (captures visual language, tokens, components, motion), `project.md` (architecture/structure overview), and `todo.md` (work log and next steps). After each step you take, update these documents as needed. Never skip this; it's not busywork, it's important. Always keep these files in context, never forget these. This is the golden rule.
+1. As you create a project, create three files: `DESIGN.md` (captures visual language, tokens, components, motion), `PROJECT.md` (architecture/structure overview), and `TODO.md` (work log and next steps). After each step you take, update these documents as needed. Never skip this; it's not busywork, it's important. Always keep these files in context, never forget these. This is the golden rule.
 
 This guide is for anyone (human or AI) working on this project or starting new ones with similar goals. It captures the principles established in this session so we avoid redoing work and keep quality high.
 

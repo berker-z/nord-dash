@@ -8,6 +8,7 @@
 
 ## Completed (current pass)
 
+- [x] Ensured calendar access tokens refresh on initial account load so overnight sessions don’t hit 401s before the interval kicks in.
 - [x] Restyled calendar account modal to mirror the todo list (flat rows, separators, no status pill), removed sub-calendar toggles, and renamed the CTA to "Add account".
 - [x] Removed Tailwind CDN usage; styles now flow through the built Tailwind pipeline (`index.css` import in `index.tsx`).
 - [x] Introduced shared UI frames (`WidgetFrame`, `ModalFrame`) and migrated widgets/modals for consistency.
