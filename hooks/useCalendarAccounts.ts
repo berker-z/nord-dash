@@ -24,13 +24,30 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
   const refreshAccounts = useCallback(async () => {
     if (!userEmail) {
       setAccounts([]);
+      setError(null);
       return;
     }
     setLoading(true);
+    let hadRefreshFailure = false;
     try {
       const accs = await getConnectedAccounts(userEmail);
-      setAccounts(accs);
-      setError(null);
+      const refreshedAccounts = await Promise.all(
+        accs.map(async (account) => {
+          try {
+            const { accessToken, expiresAt } = await refreshAccountTokenIfNeeded(
+              account,
+              userEmail
+            );
+            return { ...account, accessToken, expiresAt };
+          } catch (err) {
+            console.error("Failed to refresh token for", account.email, err);
+            hadRefreshFailure = true;
+            return account;
+          }
+        })
+      );
+      setAccounts(refreshedAccounts);
+      setError(hadRefreshFailure ? "ACCOUNT_REFRESH_FAILED" : null);
     } catch (e) {
       console.error("Failed to load calendar accounts", e);
       setError("ACCOUNT_LOAD_FAILED");
@@ -49,18 +66,25 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     const interval = setInterval(() => {
       accounts.forEach((account) => {
         refreshAccountTokenIfNeeded(account, userEmail)
-          .then((newToken) => {
-            if (newToken && newToken !== account.accessToken) {
+          .then(({ accessToken, expiresAt, refreshed }) => {
+            if (
+              refreshed ||
+              accessToken !== account.accessToken ||
+              expiresAt !== account.expiresAt
+            ) {
               setAccounts((prev) =>
                 prev.map((a) =>
-                  a.email === account.email ? { ...a, accessToken: newToken } : a
+                  a.email === account.email
+                    ? { ...a, accessToken, expiresAt }
+                    : a
                 )
               );
             }
           })
-          .catch((e) =>
-            console.error("Failed to refresh token for", account.email, e)
-          );
+          .catch((e) => {
+            console.error("Failed to refresh token for", account.email, e);
+            setError("ACCOUNT_REFRESH_FAILED");
+          });
       });
     }, 5 * 60 * 1000);
 

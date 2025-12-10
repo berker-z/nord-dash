@@ -255,9 +255,13 @@ const fetchUserProfile = async (accessToken: string) => {
     return data;
 };
 
-export const refreshAccountTokenIfNeeded = async (account: CalendarAccount, userEmail: string): Promise<string> => {
-    // Refresh 5 mins before expiry
-    if (Date.now() > account.expiresAt - (5 * 60 * 1000)) {
+export const refreshAccountTokenIfNeeded = async (
+    account: CalendarAccount,
+    userEmail: string
+): Promise<{ accessToken: string; expiresAt: number; refreshed: boolean }> => {
+    const refreshThreshold = account.expiresAt - (5 * 60 * 1000);
+    // Refresh 5 mins before expiry (or if already expired)
+    if (Date.now() > refreshThreshold) {
         console.log(`Refreshing access token for ${account.email}`);
         try {
             const data = await refreshOAuthToken(account.refreshToken);
@@ -267,11 +271,11 @@ export const refreshAccountTokenIfNeeded = async (account: CalendarAccount, user
                 accessToken: data.access_token,
                 expiresAt: newExpiresAt
             });
-            return data.access_token;
+            return { accessToken: data.access_token, expiresAt: newExpiresAt, refreshed: true };
         } catch (e) {
             console.error(`Failed to refresh token for ${account.email}`, e);
             throw e;
         }
     }
-    return account.accessToken;
+    return { accessToken: account.accessToken, expiresAt: account.expiresAt, refreshed: false };
 }
