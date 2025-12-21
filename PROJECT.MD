@@ -32,6 +32,7 @@
 - Crypto: Fast Binance pairs plus slower CoinGecko metrics when `COINGECKO_API_KEY` is present.
 - Bible: Structured `{ reference, text }` responses from OpenAI.
 - Weather: One-off fetch on load from Open-Meteo.
+- Notepad: Firebase-backed notes stored under `users/{email}/notes/{noteId}` with manual save (autosave TBD), icon-only controls (new/load/save), modal picker that lists notes by name/snippet, autosizing textarea. Lives under the agenda in the left column.
 
 ## UI & Styling
 

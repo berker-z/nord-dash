@@ -3,7 +3,8 @@ export enum WidgetType {
   AGENDA = 'AGENDA',
   TODO = 'TODO',
   CRYPTO = 'CRYPTO',
-  BIBLE = 'BIBLE'
+  BIBLE = 'BIBLE',
+  NOTEPAD = 'NOTEPAD'
 }
 
 export interface LayoutItem {

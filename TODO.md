@@ -5,9 +5,12 @@
 - [ ] Primary-only calendar flow: ensure primary detection works across accounts; revisit multi-calendar support later if needed.
 - [ ] Surface per-account re-auth UX when token refresh fails.
 - [ ] Commit and push latest fixes/refactors.
+- [ ] Notepad autosave cadence: settle on debounce/interval strategy and hook it up to Firestore without hammering.
+- [ ] Notepad UX polish: allow renaming notes and confirm destructive actions.
 
 ## Completed (current pass)
 
+- [x] Moved notepad to Firebase per-user notes, added icon-only actions, modal loader, and save-state colored icon with autosizing textarea.
 - [x] Ensured calendar access tokens refresh on initial account load so overnight sessions don’t hit 401s before the interval kicks in.
 - [x] Restyled calendar account modal to mirror the todo list (flat rows, separators, no status pill), removed sub-calendar toggles, and renamed the CTA to "Add account".
 - [x] Removed Tailwind CDN usage; styles now flow through the built Tailwind pipeline (`index.css` import in `index.tsx`).

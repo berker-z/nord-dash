@@ -5,6 +5,7 @@ import { CalendarWidget } from "./components/CalendarWidget";
 import { TodoWidget } from "./components/TodoWidget";
 import { CryptoWidget } from "./components/CryptoWidget";
 import { BibleWidget } from "./components/BibleWidget";
+import { NotepadWidget } from "./components/NotepadWidget";
 import { fetchWeather } from "./services/weatherService";
 import {
   handleIdentityLogin,
@@ -66,6 +67,12 @@ const initialLayout: Record<number, LayoutItem[]> = {
       id: "w2",
       type: WidgetType.AGENDA,
       title: "/daily_agenda",
+      heightLevel: 0,
+    },
+    {
+      id: "w6",
+      type: WidgetType.NOTEPAD,
+      title: "/notepad",
       heightLevel: 0,
     },
   ],
@@ -257,6 +264,8 @@ const App: React.FC = () => {
         return <CryptoWidget />;
       case WidgetType.BIBLE:
         return <BibleWidget />;
+      case WidgetType.NOTEPAD:
+        return <NotepadWidget userEmail={user?.email || null} />;
       default:
         return null;
     }
