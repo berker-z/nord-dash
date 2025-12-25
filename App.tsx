@@ -113,8 +113,10 @@ const App: React.FC = () => {
     accounts: calendarAccounts,
     loading: loadingAccounts,
     error: calendarAccountError,
+    failedAccounts: failedCalendarAccounts,
     refreshAccounts: refreshCalendarAccounts,
     connectAccount: connectCalendarAccount,
+    reauthAccount: reauthCalendarAccount,
     removeAccount: removeCalendarAccount,
   } = useCalendarAccounts(user?.email || null);
 
@@ -244,6 +246,8 @@ const App: React.FC = () => {
             onRefresh={handleRefreshAccounts}
             onRemoveAccount={removeCalendarAccount}
             accountError={calendarAccountError}
+            failedAccounts={failedCalendarAccounts}
+            onReauthAccount={reauthCalendarAccount}
           />
         );
       case WidgetType.AGENDA:
@@ -255,6 +259,8 @@ const App: React.FC = () => {
             onRefresh={handleRefreshAccounts}
             onRemoveAccount={removeCalendarAccount}
             accountError={calendarAccountError}
+            failedAccounts={failedCalendarAccounts}
+            onReauthAccount={reauthCalendarAccount}
           />
         );
 

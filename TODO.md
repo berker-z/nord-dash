@@ -3,7 +3,8 @@
 ## In Progress / Next
 
 - [ ] Primary-only calendar flow: ensure primary detection works across accounts; revisit multi-calendar support later if needed.
-- [ ] Surface per-account re-auth UX when token refresh fails.
+- [x] Surface re-auth CTA when token refresh fails (per-account).
+- [x] Show which calendar accounts failed to refresh so the user can re-auth them.
 - [ ] Commit and push latest fixes/refactors.
 - [ ] Notepad autosave cadence: settle on debounce/interval strategy and hook it up to Firestore without hammering.
 - [ ] Notepad UX polish: allow renaming notes and confirm destructive actions.

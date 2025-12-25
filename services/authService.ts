@@ -89,7 +89,10 @@ export const handleIdentityLogin = async (): Promise<void> => {
     });
 };
 
-export const connectCalendarAccount = async (currentUserEmail: string): Promise<void> => {
+export const connectCalendarAccount = async (
+    currentUserEmail: string,
+    hintEmail?: string
+): Promise<void> => {
     return new Promise((resolve, reject) => {
         if (!window.google || !window.google.accounts) return reject("Google API not loaded");
 
@@ -97,7 +100,7 @@ export const connectCalendarAccount = async (currentUserEmail: string): Promise<
             client_id: GOOGLE_CLIENT_ID,
             scope: "email profile https://www.googleapis.com/auth/calendar",
             ux_mode: "popup",
-            // hint: "user@example.com" // You could pass this if you wanted to force a specific user
+            hint: hintEmail,
             callback: async (response: any) => {
                 if (response.code) {
                     try {

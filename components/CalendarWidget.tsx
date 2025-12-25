@@ -18,6 +18,8 @@ interface CalendarWidgetProps {
   onRefresh: () => void;
   onRemoveAccount: (accountEmail: string) => Promise<void>;
   accountError?: string | null;
+  failedAccounts?: string[];
+  onReauthAccount?: (accountEmail: string) => Promise<void>;
 }
 
 export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
@@ -27,6 +29,8 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   onRefresh,
   onRemoveAccount,
   accountError,
+  failedAccounts = [],
+  onReauthAccount,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDayEvents, setSelectedDayEvents] = useState<
@@ -210,7 +214,21 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
     <div className="flex flex-col relative font-mono">
       {accountError && (
         <div className="mb-3 p-2 text-sm text-nord-11 border border-nord-11 bg-nord-11/10 rounded">
-          {accountError}
+          <div>{accountError}</div>
+          {failedAccounts.length > 0 && (
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-nord-11/80">
+              <span className="uppercase tracking-wide">Affected:</span>
+              <span className="text-nord-11/90">{failedAccounts.join(", ")}</span>
+              {onReauthAccount && (
+                <button
+                  onClick={() => onReauthAccount(failedAccounts[0])}
+                  className="ml-auto text-[11px] px-2 py-1 border border-nord-11/60 rounded hover:bg-nord-11/10 transition-colors"
+                >
+                  Re-auth first
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -242,6 +260,8 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           onClose={() => setIsAccountsModalOpen(false)}
           onConnect={onConnect}
           onRemoveAccount={handleRemoveAccount}
+          failedAccounts={failedAccounts}
+          onReauthAccount={onReauthAccount}
         />
       )}
 

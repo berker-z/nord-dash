@@ -11,8 +11,10 @@ interface Result {
   accounts: CalendarAccount[];
   loading: boolean;
   error: string | null;
+  failedAccounts: string[];
   refreshAccounts: () => Promise<void>;
   connectAccount: () => Promise<void>;
+  reauthAccount: (accountEmail: string) => Promise<void>;
   removeAccount: (accountEmail: string) => Promise<void>;
 }
 
@@ -20,6 +22,7 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
   const [accounts, setAccounts] = useState<CalendarAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedAccounts, setFailedAccounts] = useState<string[]>([]);
 
   const refreshAccounts = useCallback(async () => {
     if (!userEmail) {
@@ -29,6 +32,7 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     }
     setLoading(true);
     let hadRefreshFailure = false;
+    const failedEmails: string[] = [];
     try {
       const accs = await getConnectedAccounts(userEmail);
       const refreshedAccounts = await Promise.all(
@@ -42,15 +46,22 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
           } catch (err) {
             console.error("Failed to refresh token for", account.email, err);
             hadRefreshFailure = true;
+            failedEmails.push(account.email);
             return account;
           }
         })
       );
       setAccounts(refreshedAccounts);
-      setError(hadRefreshFailure ? "ACCOUNT_REFRESH_FAILED" : null);
+      setFailedAccounts(failedEmails);
+      setError(
+        hadRefreshFailure
+          ? `ACCOUNT_REFRESH_FAILED: ${failedEmails.join(", ")}`
+          : null
+      );
     } catch (e) {
       console.error("Failed to load calendar accounts", e);
       setError("ACCOUNT_LOAD_FAILED");
+      setFailedAccounts([]);
     } finally {
       setLoading(false);
     }
@@ -83,7 +94,13 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
           })
           .catch((e) => {
             console.error("Failed to refresh token for", account.email, e);
-            setError("ACCOUNT_REFRESH_FAILED");
+            setFailedAccounts((prev) => {
+              const next = prev.includes(account.email)
+                ? prev
+                : [...prev, account.email];
+              setError(`ACCOUNT_REFRESH_FAILED: ${next.join(", ")}`);
+              return next;
+            });
           });
       });
     }, 5 * 60 * 1000);
@@ -96,6 +113,15 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     await connectCalendarAccount(userEmail);
     await refreshAccounts();
   }, [userEmail, refreshAccounts]);
+
+  const reauthAccount = useCallback(
+    async (accountEmail: string) => {
+      if (!userEmail) return;
+      await connectCalendarAccount(userEmail, accountEmail);
+      await refreshAccounts();
+    },
+    [userEmail, refreshAccounts]
+  );
 
   const removeAccount = useCallback(
     async (accountEmail: string) => {
@@ -110,8 +136,10 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     accounts,
     loading,
     error,
+    failedAccounts,
     refreshAccounts,
     connectAccount,
+    reauthAccount,
     removeAccount,
   };
 };

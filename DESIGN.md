@@ -23,7 +23,9 @@
 - Keep base tokens in `index.css`; prefer Nord palette utilities or the CSS vars instead of ad-hoc hex values.
 - For widget chrome: `WidgetFrame` + Nord borders (no shadows); avoid recreating per-widget headers.
 - For dialogs: `ModalFrame` with `tone` set to the intent; place primary action in `footer`, keep body content lightweight and scroll-friendly.
+- Calendar error banner: show the error code in uppercase and, when token refresh fails, append a tiny secondary line listing the affected account emails.
 - Connected Accounts modal: no card backgrounds; accounts render as a flat list with thin separators (mirrors the todo list). Remove status pills/extra labels; show only the email with a white disconnect icon that turns red on hover (no hover fill).
+- Re-auth pattern: when an account refresh fails, show a small `REAUTH` text button next to that account; keep it understated (bordered, monochrome) and aligned with the existing list actions.
 - Typography utilities live in `index.css` (`@layer components`): `text-nav`, `text-section`, `text-card-title`, `text-body`, `text-body-sm`, `text-muted`, `text-muted-sm`, `text-label`, `text-meta`, `text-heading-quiet`. Use these instead of inline weights. **Only calendar day numbers in the month grid should be bold/medium; everything else stays at the default weight.**
 - Notepad pattern: multi-line text area on `bg-nord-1` with `border-2 border-nord-3`, `rounded-lg`, `px-4 py-3`, `leading-relaxed`, and `resize-none`; autosize via JS instead of CSS `resize`. Actions are icon-only in the header (new, load modal, save). Save icon color reflects state (`text-nord-13` dirty, `text-nord-14` saved, `text-nord-9` saving); no separate status pill.
 

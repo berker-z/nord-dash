@@ -14,7 +14,7 @@
 
 - Login (`authService.handleIdentityLogin`): Google OAuth code client → exchange for access/refresh tokens → whitelist check → Firebase sign-in with Google credential.
 - Calendar accounts stored at `users/{ownerEmail}/calendarAccounts/{accountEmail}` with `accessToken`, `refreshToken`, `expiresAt`, `calendars[]`, profile info.
-- Refresh: `useCalendarAccounts` loads accounts, refreshes tokens near/after expiry via `refreshAccountTokenIfNeeded`, persists updates to Firestore, and runs a 5-minute interval.
+ - Refresh: `useCalendarAccounts` loads accounts, refreshes tokens near/after expiry via `refreshAccountTokenIfNeeded`, persists updates to Firestore, and runs a 5-minute interval. Refresh failures now bubble up with the affected account emails so the UI can point to the failing identity.
 - Logout: `auth.signOut()`, local user cleared; Firestore calendar docs remain for reuse. Firestore rules restrict access to the signed-in email.
 
 ## Data Sources
@@ -27,7 +27,7 @@
 
 ## Feature Modules
 
-- Calendar: `useCalendarAccounts` (load/refresh/connect/disconnect), `useCalendarEvents` (agenda/month ranges, per-account color), API calls in `services/googleCalendarClient.ts`; UI in `components/CalendarWidget` + subcomponents.
+ - Calendar: `useCalendarAccounts` (load/refresh/connect/disconnect/reauth), `useCalendarEvents` (agenda/month ranges, per-account color), API calls in `services/googleCalendarClient.ts`; UI in `components/CalendarWidget` + subcomponents.
 - Todos: Firestore-backed list with transactions and realtime `onSnapshot` updates.
 - Crypto: Fast Binance pairs plus slower CoinGecko metrics when `COINGECKO_API_KEY` is present.
 - Bible: Structured `{ reference, text }` responses from OpenAI.
@@ -36,7 +36,7 @@
 
 ## UI & Styling
 
-- Shared primitives: `WidgetFrame` for widgets, `ModalFrame` for overlays, `Checkbox` reused across forms.
+ - Shared primitives: `WidgetFrame` for widgets, `ModalFrame` for overlays, `Checkbox` reused across forms. Account modal shows REAUTH button for accounts whose token refresh failed.
 - Nord palette (`nord-0`…`nord-16`) defined in Tailwind; base tokens (radii, borders, typography utilities) in `index.css`.
 - Calendar event colors cycle per account; event creation/editing uses the primary calendar; editing keeps account locked.
 

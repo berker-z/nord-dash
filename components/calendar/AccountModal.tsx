@@ -8,6 +8,8 @@ interface Props {
   onClose: () => void;
   onConnect: () => void;
   onRemoveAccount: (accountEmail: string) => void;
+  onReauthAccount?: (accountEmail: string) => void | Promise<void>;
+  failedAccounts?: string[];
 }
 
 export const AccountModal: React.FC<Props> = ({
@@ -15,6 +17,8 @@ export const AccountModal: React.FC<Props> = ({
   onClose,
   onConnect,
   onRemoveAccount,
+  onReauthAccount,
+  failedAccounts = [],
 }) => {
   return (
     <ModalFrame
@@ -56,8 +60,12 @@ export const AccountModal: React.FC<Props> = ({
       ) : (
         <div className="divide-y divide-nord-1/80">
           {accounts.map((acc) => {
+            const isFailed = failedAccounts.includes(acc.email);
             return (
-              <div key={acc.email} className="py-4 flex items-center justify-between gap-3">
+              <div
+                key={acc.email}
+                className="py-4 flex items-center justify-between gap-3"
+              >
                 <div className="flex items-center gap-3 min-w-0">
                 <Avatar
                   src={acc.picture}
@@ -68,15 +76,29 @@ export const AccountModal: React.FC<Props> = ({
                     <div className="text-card-title truncate">
                       {acc.email}
                     </div>
+                    {isFailed && (
+                      <div className="text-[11px] text-nord-11/80">Refresh failed — re-auth required</div>
+                    )}
                   </div>
                 </div>
-                <button
-                  onClick={() => onRemoveAccount(acc.email)}
-                  className="p-2 text-nord-6 hover:text-nord-11 transition-colors"
-                  title="Disconnect account"
-                >
-                  <LogOut size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {isFailed && onReauthAccount && (
+                    <button
+                      onClick={() => onReauthAccount(acc.email)}
+                      className="px-3 py-2 text-[12px] border border-nord-9/60 text-nord-9 rounded hover:bg-nord-9/10 transition-colors"
+                      title="Re-authenticate this account"
+                    >
+                      REAUTH
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onRemoveAccount(acc.email)}
+                    className="p-2 text-nord-6 hover:text-nord-11 transition-colors"
+                    title="Disconnect account"
+                  >
+                    <LogOut size={18} />
+                  </button>
+                </div>
               </div>
             );
           })}
