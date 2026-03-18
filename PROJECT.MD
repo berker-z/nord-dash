@@ -23,7 +23,7 @@
 - Firestore (Firebase Auth) — todos and calendar account tokens/metadata.
 - Binance + CoinGecko (API key gated) — crypto prices/dominance/NFT floors.
 - Open-Meteo — current weather.
-- OpenAI GPT-4o — Bible quote of the day.
+- OpenAI GPT-5 nano — Bible quote of the day.
 
 ## Feature Modules
 
@@ -31,7 +31,7 @@
 - Calendar diagnostics: failed `calendarList` calls now log Google HTTP status + body so Workspace/API restriction issues can be identified instead of appearing as a silent empty account.
 - Todos: Firestore-backed list with transactions and realtime `onSnapshot` updates.
 - Crypto: Fast Binance pairs plus slower CoinGecko metrics when `COINGECKO_API_KEY` is present.
-- Bible: Structured `{ reference, text }` responses from OpenAI.
+- Bible: Structured `{ reference, text }` responses from OpenAI via `gpt-5-nano`.
 - Weather: One-off fetch on load from Open-Meteo.
 - Notepad: Firebase-backed notes stored under `users/{email}/notes/{noteId}` with manual save (autosave TBD), icon-only controls (new/load/save), modal picker that lists notes by name/snippet, autosizing textarea. Lives under the agenda in the left column.
 

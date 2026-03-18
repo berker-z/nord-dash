@@ -1,12 +1,14 @@
-import { BibleQuote } from '../types';
+import { BibleQuote } from "../types";
+
+const OPENAI_MODEL = "gpt-5-nano";
 
 export const getBibleQuote = async (feeling: string): Promise<BibleQuote> => {
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  
-  if (!apiKey || apiKey === 'YOUR_OPENAI_API_KEY_HERE') {
+
+  if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY_HERE") {
     return {
       reference: "System Error",
-      text: "OpenAI API Key is missing. Please configure your environment."
+      text: "OpenAI API Key is missing. Please configure your environment.",
     };
   }
 
@@ -21,28 +23,28 @@ Return ONLY a valid JSON object with this exact structure:
   "text": "The full passage text"
 }`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: OPENAI_MODEL,
         messages: [
           {
-            role: 'system',
-            content: 'You are a helpful assistant that provides relevant Bible passages. Always respond with valid JSON only.'
+            role: "system",
+            content:
+              "You are a helpful assistant that provides relevant Bible passages. Always respond with valid JSON only.",
           },
           {
-            role: 'user',
-            content: prompt
-          }
+            role: "user",
+            content: prompt,
+          },
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        max_tokens: 600
-      })
+        response_format: { type: "json_object" },
+        max_tokens: 600,
+      }),
     });
 
     if (!response.ok) {
@@ -51,18 +53,17 @@ Return ONLY a valid JSON object with this exact structure:
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content;
-    
+
     if (!content) {
-      throw new Error('No content in response');
+      throw new Error("No content in response");
     }
 
     return JSON.parse(content) as BibleQuote;
-
   } catch (error) {
     console.error("OpenAI API Error:", error);
     return {
       reference: "Error 500",
-      text: "I could not retrieve a divine message at this time. Please try again later."
+      text: "I could not retrieve a divine message at this time. Please try again later.",
     };
   }
 };

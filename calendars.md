@@ -38,7 +38,7 @@
 
 - Todos: `services/todoService.ts` uses Firestore transactions; `subscribeTodos` sets/initializes `users/{email}` with `{ todos: [] }`.
 - Crypto: Binance + CoinGecko; CoinGecko uses `COINGECKO_API_KEY` (process env) for `x-cg-demo-api-key`.
-- Bible: OpenAI GPT-4o via `openaiService.ts`.
+- Bible: OpenAI `gpt-5-nano` via `openaiService.ts`.
 - Weather: Open-Meteo, public.
 
 ## Strengths

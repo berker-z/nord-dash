@@ -11,6 +11,7 @@
 
 ## Completed (current pass)
 
+- [x] Switched the Bible quote OpenAI model from `gpt-4o` to `gpt-5-nano` and removed unsupported GPT-5 sampling params.
 - [x] Improved calendar-list diagnostics so Google Calendar API status/body is logged instead of silently collapsing account metadata to an empty calendar list.
 - [x] Replaced primary-only calendar sync with per-account calendar visibility controls, synced calendar metadata from Google on refresh, and fetched events from all visible calendars.
 - [x] Kept event editing pinned to the source calendar and allowed create flow to target writable calendars when more than one is available.
