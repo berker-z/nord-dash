@@ -11,6 +11,7 @@
 
 ## Completed (current pass)
 
+- [x] Forced offline-consent on Google code flows so the primary account can recover a refresh token, and made missing refresh tokens fail explicitly for re-auth.
 - [x] Moved notepad to Firebase per-user notes, added icon-only actions, modal loader, and save-state colored icon with autosizing textarea.
 - [x] Ensured calendar access tokens refresh on initial account load so overnight sessions don’t hit 401s before the interval kicks in.
 - [x] Restyled calendar account modal to mirror the todo list (flat rows, separators, no status pill), removed sub-calendar toggles, and renamed the CTA to "Add account".
