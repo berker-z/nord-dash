@@ -9,11 +9,17 @@ export const listCalendars = async (accessToken: string) => {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
-      console.error("Failed to list calendars");
+      const errorBody = await response.text();
+      console.error(
+        "Failed to list calendars:",
+        response.status,
+        response.statusText,
+        errorBody,
+      );
       return [];
     }
 
@@ -29,7 +35,7 @@ export const listEvents = async (
   accessToken: string,
   calendarId: string,
   timeMin: Date,
-  timeMax: Date
+  timeMax: Date,
 ): Promise<CalendarEvent[]> => {
   try {
     const params = new URLSearchParams({
@@ -41,13 +47,13 @@ export const listEvents = async (
 
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
+        calendarId,
       )}/events?${params}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -55,13 +61,9 @@ export const listEvents = async (
         throw new Error("UNAUTHORIZED");
       }
       const errorBody = await response.text();
-      console.error(
-        "Calendar API Error Response:",
-        response.status,
-        errorBody
-      );
+      console.error("Calendar API Error Response:", response.status, errorBody);
       throw new Error(
-        `Failed to fetch calendar events: ${response.status} ${response.statusText}`
+        `Failed to fetch calendar events: ${response.status} ${response.statusText}`,
       );
     }
 
@@ -74,7 +76,7 @@ export const listEvents = async (
 
       let videoLink =
         item.conferenceData?.entryPoints?.find(
-          (ep: any) => ep.entryPointType === "video"
+          (ep: any) => ep.entryPointType === "video",
         )?.uri || null;
 
       if (
@@ -95,7 +97,7 @@ export const listEvents = async (
             (url: string) =>
               url.includes("zoom.us") ||
               url.includes("teams.microsoft") ||
-              url.includes("meet.google")
+              url.includes("meet.google"),
           );
         }
       }
@@ -130,12 +132,12 @@ export const listEvents = async (
 export const createEvent = async (
   accessToken: string,
   calendarId: string,
-  event: any
+  event: any,
 ) => {
   try {
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
+        calendarId,
       )}/events?conferenceDataVersion=1`,
       {
         method: "POST",
@@ -144,7 +146,7 @@ export const createEvent = async (
           "Content-Type": "application/json",
         },
         body: JSON.stringify(event),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -167,12 +169,12 @@ export const updateEvent = async (
   accessToken: string,
   calendarId: string,
   eventId: string,
-  event: any
+  event: any,
 ) => {
   try {
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
+        calendarId,
       )}/events/${eventId}?conferenceDataVersion=1`,
       {
         method: "PUT",
@@ -181,7 +183,7 @@ export const updateEvent = async (
           "Content-Type": "application/json",
         },
         body: JSON.stringify(event),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -203,19 +205,19 @@ export const updateEvent = async (
 export const deleteEvent = async (
   accessToken: string,
   calendarId: string,
-  eventId: string
+  eventId: string,
 ) => {
   try {
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
+        calendarId,
       )}/events/${eventId}`,
       {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {

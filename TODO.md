@@ -11,6 +11,7 @@
 
 ## Completed (current pass)
 
+- [x] Improved calendar-list diagnostics so Google Calendar API status/body is logged instead of silently collapsing account metadata to an empty calendar list.
 - [x] Replaced primary-only calendar sync with per-account calendar visibility controls, synced calendar metadata from Google on refresh, and fetched events from all visible calendars.
 - [x] Kept event editing pinned to the source calendar and allowed create flow to target writable calendars when more than one is available.
 - [x] Forced offline-consent on Google code flows so the primary account can recover a refresh token, and made missing refresh tokens fail explicitly for re-auth.

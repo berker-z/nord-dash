@@ -28,6 +28,7 @@
 ## Feature Modules
 
 - Calendar: `useCalendarAccounts` (load/refresh/connect/disconnect/reauth plus persisted per-calendar visibility), `useCalendarEvents` (agenda/month ranges, fetches all visible calendars per account with per-account color), API calls in `services/googleCalendarClient.ts`; UI in `components/CalendarWidget` + subcomponents.
+- Calendar diagnostics: failed `calendarList` calls now log Google HTTP status + body so Workspace/API restriction issues can be identified instead of appearing as a silent empty account.
 - Todos: Firestore-backed list with transactions and realtime `onSnapshot` updates.
 - Crypto: Fast Binance pairs plus slower CoinGecko metrics when `COINGECKO_API_KEY` is present.
 - Bible: Structured `{ reference, text }` responses from OpenAI.

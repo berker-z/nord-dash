@@ -18,6 +18,7 @@
 ### Calendar Data & UI
 
 - API calls live in `services/googleCalendarClient.ts` (list/create/update/delete events, list calendars); `calendarService.ts` re-exports for compatibility.
+- `listCalendars` now logs HTTP status/text/body on failure so account-specific Workspace/API permission issues are debuggable.
 - Events are fetched via `useCalendarEvents`:
   - Mode-sensitive ranges: today (AGENDA) or month range (MONTH).
   - Per-account visibility: account metadata stores all discovered calendars, and event sync fetches every calendar with `isVisible !== false`.
