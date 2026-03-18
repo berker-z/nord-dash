@@ -35,7 +35,7 @@ export const useCalendarEvents = ({ accounts, mode, currentDate }: Options) => {
         now.getDate(),
         0,
         0,
-        0
+        0,
       );
       end = new Date(
         now.getFullYear(),
@@ -43,7 +43,7 @@ export const useCalendarEvents = ({ accounts, mode, currentDate }: Options) => {
         now.getDate(),
         23,
         59,
-        59
+        59,
       );
     } else {
       const year = currentDate.getFullYear();
@@ -59,33 +59,30 @@ export const useCalendarEvents = ({ accounts, mode, currentDate }: Options) => {
 
     accounts.forEach((account, accountIndex) => {
       const colorId = accountColors[accountIndex % accountColors.length];
-
-      const calendars = account.calendars || [];
-      const primaryCalendar =
-        calendars.find((cal) => cal.primary || cal.id === "primary") ||
-        calendars.find((cal) => cal.id === account.email) ||
-        calendars[0];
-
-      if (!primaryCalendar) return;
-
-      fetchPromises.push(
-        listEvents(account.accessToken, primaryCalendar.id, start, end)
-          .then((evts) => {
-            const enriched = evts.map((e) => ({
-              ...e,
-              colorId,
-              sourceCalendarId: primaryCalendar.id,
-              sourceAccountEmail: account.email,
-            })) as CalendarEvent[];
-            allEvents.push(...enriched);
-          })
-          .catch((err) => {
-            console.error(
-              `Failed to fetch for ${account.email} / ${primaryCalendar.id}`,
-              err
-            );
-          })
+      const calendars = (account.calendars || []).filter(
+        (calendar) => calendar.isVisible !== false,
       );
+
+      calendars.forEach((calendar) => {
+        fetchPromises.push(
+          listEvents(account.accessToken, calendar.id, start, end)
+            .then((evts) => {
+              const enriched = evts.map((e) => ({
+                ...e,
+                colorId,
+                sourceCalendarId: calendar.id,
+                sourceAccountEmail: account.email,
+              })) as CalendarEvent[];
+              allEvents.push(...enriched);
+            })
+            .catch((err) => {
+              console.error(
+                `Failed to fetch for ${account.email} / ${calendar.id}`,
+                err,
+              );
+            }),
+        );
+      });
     });
 
     try {

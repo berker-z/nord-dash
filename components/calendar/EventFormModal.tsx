@@ -24,14 +24,14 @@ export const EventFormModal: React.FC<Props> = ({
 }) => {
   const [title, setTitle] = useState(initialEvent?.title || "");
   const [time, setTime] = useState(
-    initialEvent?.time !== "ALL DAY" ? initialEvent?.time || "12:00" : "12:00"
+    initialEvent?.time !== "ALL DAY" ? initialEvent?.time || "12:00" : "12:00",
   );
   const [description, setDescription] = useState(
-    initialEvent?.description || ""
+    initialEvent?.description || "",
   );
   const [duration, setDuration] = useState(60);
   const [hasGoogleMeet, setHasGoogleMeet] = useState(
-    !!initialEvent?.link?.includes("meet.google")
+    !!initialEvent?.link?.includes("meet.google"),
   );
   const [attendees, setAttendees] = useState<string[]>([]);
   const [newAttendee, setNewAttendee] = useState("");
@@ -39,16 +39,25 @@ export const EventFormModal: React.FC<Props> = ({
 
   const defaultAccount = accounts[0];
   const getPrimaryCalendarId = (account?: CalendarAccount) =>
-    account?.calendars?.find((c) => c.primary || c.id === account.email || c.id === "primary")?.id ||
+    account?.calendars?.find(
+      (c) => c.primary || c.id === account.email || c.id === "primary",
+    )?.id ||
     account?.calendars?.[0]?.id ||
     "primary";
+  const getWritableCalendars = (account?: CalendarAccount) =>
+    (account?.calendars || []).filter(
+      (calendar) =>
+        calendar.isVisible !== false &&
+        calendar.accessRole !== "reader" &&
+        calendar.accessRole !== "freeBusyReader",
+    );
   const defaultCalendarId = getPrimaryCalendarId(defaultAccount);
 
   const [selectedAccountEmail, setSelectedAccountEmail] = useState<string>(
-    (initialEvent as any)?.sourceAccountEmail || defaultAccount?.email || ""
+    (initialEvent as any)?.sourceAccountEmail || defaultAccount?.email || "",
   );
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>(
-    (initialEvent as any)?.sourceCalendarId || defaultCalendarId
+    (initialEvent as any)?.sourceCalendarId || defaultCalendarId,
   );
 
   useEffect(() => {
@@ -64,7 +73,8 @@ export const EventFormModal: React.FC<Props> = ({
       }
 
       const evt = initialEvent as any;
-      if (evt.sourceAccountEmail) setSelectedAccountEmail(evt.sourceAccountEmail);
+      if (evt.sourceAccountEmail)
+        setSelectedAccountEmail(evt.sourceAccountEmail);
       if (evt.sourceCalendarId) setSelectedCalendarId(evt.sourceCalendarId);
     }
   }, [initialEvent]);
@@ -72,11 +82,14 @@ export const EventFormModal: React.FC<Props> = ({
   useEffect(() => {
     const account = accounts.find((a) => a.email === selectedAccountEmail);
     if (account) {
-      const calExists = (account.calendars || []).some(
-        (c) => c.id === selectedCalendarId
+      const writableCalendars = getWritableCalendars(account);
+      const calExists = writableCalendars.some(
+        (c) => c.id === selectedCalendarId,
       );
       if (!calExists) {
-        setSelectedCalendarId(getPrimaryCalendarId(account));
+        setSelectedCalendarId(
+          writableCalendars[0]?.id || getPrimaryCalendarId(account),
+        );
       }
     } else if (accounts[0]) {
       setSelectedCalendarId(getPrimaryCalendarId(accounts[0]));
@@ -103,7 +116,11 @@ export const EventFormModal: React.FC<Props> = ({
       alert("Please select a valid account");
       return;
     }
-    const targetCalendarId = getPrimaryCalendarId(account);
+    const writableCalendars = getWritableCalendars(account);
+    const targetCalendarId =
+      selectedCalendarId ||
+      writableCalendars[0]?.id ||
+      getPrimaryCalendarId(account);
 
     setIsSubmitting(true);
     try {
@@ -115,7 +132,7 @@ export const EventFormModal: React.FC<Props> = ({
       endDate.setMinutes(startDate.getMinutes() + duration);
 
       const accountIndex = accounts.findIndex(
-        (a) => a.email === selectedAccountEmail
+        (a) => a.email === selectedAccountEmail,
       );
       let colorId = "9";
       if (accountIndex === 1) colorId = "2";
@@ -150,7 +167,7 @@ export const EventFormModal: React.FC<Props> = ({
           account.accessToken,
           targetCalendarId,
           initialEvent.id,
-          eventBody
+          eventBody,
         );
       } else {
         await createEvent(account.accessToken, targetCalendarId, eventBody);
@@ -165,7 +182,10 @@ export const EventFormModal: React.FC<Props> = ({
     }
   };
 
-  const selectedAccount = accounts.find((a) => a.email === selectedAccountEmail);
+  const selectedAccount = accounts.find(
+    (a) => a.email === selectedAccountEmail,
+  );
+  const writableCalendars = getWritableCalendars(selectedAccount);
 
   if (!isOpen) return null;
 
@@ -201,22 +221,42 @@ export const EventFormModal: React.FC<Props> = ({
 
           {initialEvent ? (
             <div className="w-full bg-nord-0 border border-nord-3 rounded p-2 text-nord-4 text-sm opacity-80">
-              Account: {selectedAccountEmail} (Locked)
+              Calendar:{" "}
+              {selectedAccount?.calendars?.find(
+                (calendar) => calendar.id === selectedCalendarId,
+              )?.summary || selectedAccountEmail}{" "}
+              / {selectedAccountEmail} (Locked)
             </div>
           ) : (
-            accounts.length > 1 && (
-              <select
-                value={selectedAccountEmail}
-                onChange={(e) => setSelectedAccountEmail(e.target.value)}
-                className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 text-sm focus:border-nord-8 focus:outline-none mb-2"
-              >
-                {accounts.map((a) => (
-                  <option key={a.email} value={a.email}>
-                    {a.email} {a.name ? `(${a.name})` : ""}
-                  </option>
-                ))}
-              </select>
-            )
+            <>
+              {accounts.length > 1 && (
+                <select
+                  value={selectedAccountEmail}
+                  onChange={(e) => setSelectedAccountEmail(e.target.value)}
+                  className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 text-sm focus:border-nord-8 focus:outline-none mb-2"
+                >
+                  {accounts.map((a) => (
+                    <option key={a.email} value={a.email}>
+                      {a.email} {a.name ? `(${a.name})` : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {writableCalendars.length > 1 && (
+                <select
+                  value={selectedCalendarId}
+                  onChange={(e) => setSelectedCalendarId(e.target.value)}
+                  className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 text-sm focus:border-nord-8 focus:outline-none"
+                >
+                  {writableCalendars.map((calendar) => (
+                    <option key={calendar.id} value={calendar.id}>
+                      {calendar.summary}
+                      {calendar.primary ? " (Primary)" : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
           )}
         </div>
 

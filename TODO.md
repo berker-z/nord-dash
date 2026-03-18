@@ -2,7 +2,7 @@
 
 ## In Progress / Next
 
-- [ ] Primary-only calendar flow: ensure primary detection works across accounts; revisit multi-calendar support later if needed.
+- [ ] Calendar account modal: polish per-account calendar visibility controls (loading states / clearer role labels if needed).
 - [x] Surface re-auth CTA when token refresh fails (per-account).
 - [x] Show which calendar accounts failed to refresh so the user can re-auth them.
 - [ ] Commit and push latest fixes/refactors.
@@ -11,6 +11,8 @@
 
 ## Completed (current pass)
 
+- [x] Replaced primary-only calendar sync with per-account calendar visibility controls, synced calendar metadata from Google on refresh, and fetched events from all visible calendars.
+- [x] Kept event editing pinned to the source calendar and allowed create flow to target writable calendars when more than one is available.
 - [x] Forced offline-consent on Google code flows so the primary account can recover a refresh token, and made missing refresh tokens fail explicitly for re-auth.
 - [x] Moved notepad to Firebase per-user notes, added icon-only actions, modal loader, and save-state colored icon with autosizing textarea.
 - [x] Ensured calendar access tokens refresh on initial account load so overnight sessions don’t hit 401s before the interval kicks in.

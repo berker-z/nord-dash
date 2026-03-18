@@ -27,7 +27,7 @@
 
 ## Feature Modules
 
-- Calendar: `useCalendarAccounts` (load/refresh/connect/disconnect/reauth), `useCalendarEvents` (agenda/month ranges, per-account color), API calls in `services/googleCalendarClient.ts`; UI in `components/CalendarWidget` + subcomponents.
+- Calendar: `useCalendarAccounts` (load/refresh/connect/disconnect/reauth plus persisted per-calendar visibility), `useCalendarEvents` (agenda/month ranges, fetches all visible calendars per account with per-account color), API calls in `services/googleCalendarClient.ts`; UI in `components/CalendarWidget` + subcomponents.
 - Todos: Firestore-backed list with transactions and realtime `onSnapshot` updates.
 - Crypto: Fast Binance pairs plus slower CoinGecko metrics when `COINGECKO_API_KEY` is present.
 - Bible: Structured `{ reference, text }` responses from OpenAI.
@@ -36,9 +36,9 @@
 
 ## UI & Styling
 
-- Shared primitives: `WidgetFrame` for widgets, `ModalFrame` for overlays, `Checkbox` reused across forms. Account modal shows REAUTH button for accounts whose token refresh failed.
+- Shared primitives: `WidgetFrame` for widgets, `ModalFrame` for overlays, `Checkbox` reused across forms. Account modal shows REAUTH for failed accounts and exposes per-account calendar visibility toggles so holiday/shared calendars can be hidden without disconnecting the account.
 - Nord palette (`nord-0`…`nord-16`) defined in Tailwind; base tokens (radii, borders, typography utilities) in `index.css`.
-- Calendar event colors cycle per account; event creation/editing uses the primary calendar; editing keeps account locked.
+- Calendar event colors cycle per account; event creation/editing keeps the account locked on edit and now preserves the source calendar instead of forcing edits back onto the primary calendar.
 
 ## Maintenance
 

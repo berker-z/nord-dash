@@ -17,6 +17,11 @@ interface CalendarWidgetProps {
   onConnect: () => void;
   onRefresh: () => void;
   onRemoveAccount: (accountEmail: string) => Promise<void>;
+  onToggleCalendarVisibility: (
+    accountEmail: string,
+    calendarId: string,
+    isVisible: boolean,
+  ) => Promise<void>;
   accountError?: string | null;
   failedAccounts?: string[];
   onReauthAccount?: (accountEmail: string) => Promise<void>;
@@ -28,6 +33,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   onConnect,
   onRefresh,
   onRemoveAccount,
+  onToggleCalendarVisibility,
   accountError,
   failedAccounts = [],
   onReauthAccount,
@@ -37,7 +43,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
     CalendarEvent[] | null
   >(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
-    null
+    null,
   );
   const { events, loading, error, refresh } = useCalendarEvents({
     accounts,
@@ -54,7 +60,8 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   const month = currentDate.getMonth();
 
   const handleRemoveAccount = async (accountEmail: string) => {
-    if (!confirm(`Are you sure you want to disconnect ${accountEmail}?`)) return;
+    if (!confirm(`Are you sure you want to disconnect ${accountEmail}?`))
+      return;
 
     try {
       await onRemoveAccount(accountEmail);
@@ -96,15 +103,19 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
 
   const confirmDeleteEvent = async () => {
     if (!selectedEvent || !eventToDelete) return;
-    
+
     // Find the account and token for this event
     // We attached sourceAccountEmail to the event in fetchEvents (we need to update type definition or just cast)
     const evt = selectedEvent as any;
-    const account = accounts.find(a => a.email === evt.sourceAccountEmail);
+    const account = accounts.find((a) => a.email === evt.sourceAccountEmail);
     if (!account) return;
 
     try {
-      await deleteEvent(account.accessToken, evt.sourceCalendarId, eventToDelete);
+      await deleteEvent(
+        account.accessToken,
+        evt.sourceCalendarId,
+        eventToDelete,
+      );
       setSelectedEvent(null);
       setIsDeleteModalOpen(false);
       setEventToDelete(null);
@@ -200,7 +211,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
 
   const handleDayClick = (day: number) => {
     const dayEvents = events.filter(
-      (e) => e.date.getDate() === day && e.date.getMonth() === month
+      (e) => e.date.getDate() === day && e.date.getMonth() === month,
     );
     if (dayEvents.length > 0) {
       setSelectedDayEvents(dayEvents);
@@ -218,7 +229,9 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           {failedAccounts.length > 0 && (
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-nord-11/80">
               <span className="uppercase tracking-wide">Affected:</span>
-              <span className="text-nord-11/90">{failedAccounts.join(", ")}</span>
+              <span className="text-nord-11/90">
+                {failedAccounts.join(", ")}
+              </span>
               {onReauthAccount && (
                 <button
                   onClick={() => onReauthAccount(failedAccounts[0])}
@@ -260,6 +273,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
           onClose={() => setIsAccountsModalOpen(false)}
           onConnect={onConnect}
           onRemoveAccount={handleRemoveAccount}
+          onToggleCalendarVisibility={onToggleCalendarVisibility}
           failedAccounts={failedAccounts}
           onReauthAccount={onReauthAccount}
         />

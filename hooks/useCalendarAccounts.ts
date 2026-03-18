@@ -5,6 +5,8 @@ import {
   connectCalendarAccount,
   refreshAccountTokenIfNeeded,
   removeCalendarAccount,
+  syncAccountCalendars,
+  updateAccountCalendars,
 } from "../services/authService";
 
 interface Result {
@@ -16,6 +18,11 @@ interface Result {
   connectAccount: () => Promise<void>;
   reauthAccount: (accountEmail: string) => Promise<void>;
   removeAccount: (accountEmail: string) => Promise<void>;
+  setCalendarVisibility: (
+    accountEmail: string,
+    calendarId: string,
+    isVisible: boolean,
+  ) => Promise<void>;
 }
 
 export const useCalendarAccounts = (userEmail: string | null): Result => {
@@ -38,25 +45,28 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
       const refreshedAccounts = await Promise.all(
         accs.map(async (account) => {
           try {
-            const { accessToken, expiresAt } = await refreshAccountTokenIfNeeded(
-              account,
-              userEmail
+            const { accessToken, expiresAt } =
+              await refreshAccountTokenIfNeeded(account, userEmail);
+            const updatedAccount = { ...account, accessToken, expiresAt };
+            const calendars = await syncAccountCalendars(
+              updatedAccount,
+              userEmail,
             );
-            return { ...account, accessToken, expiresAt };
+            return { ...updatedAccount, calendars };
           } catch (err) {
             console.error("Failed to refresh token for", account.email, err);
             hadRefreshFailure = true;
             failedEmails.push(account.email);
             return account;
           }
-        })
+        }),
       );
       setAccounts(refreshedAccounts);
       setFailedAccounts(failedEmails);
       setError(
         hadRefreshFailure
           ? `ACCOUNT_REFRESH_FAILED: ${failedEmails.join(", ")}`
-          : null
+          : null,
       );
     } catch (e) {
       console.error("Failed to load calendar accounts", e);
@@ -74,36 +84,39 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
   // Token auto-refresh (5 min before expiry)
   useEffect(() => {
     if (!userEmail || accounts.length === 0) return;
-    const interval = setInterval(() => {
-      accounts.forEach((account) => {
-        refreshAccountTokenIfNeeded(account, userEmail)
-          .then(({ accessToken, expiresAt, refreshed }) => {
-            if (
-              refreshed ||
-              accessToken !== account.accessToken ||
-              expiresAt !== account.expiresAt
-            ) {
-              setAccounts((prev) =>
-                prev.map((a) =>
-                  a.email === account.email
-                    ? { ...a, accessToken, expiresAt }
-                    : a
-                )
-              );
-            }
-          })
-          .catch((e) => {
-            console.error("Failed to refresh token for", account.email, e);
-            setFailedAccounts((prev) => {
-              const next = prev.includes(account.email)
-                ? prev
-                : [...prev, account.email];
-              setError(`ACCOUNT_REFRESH_FAILED: ${next.join(", ")}`);
-              return next;
+    const interval = setInterval(
+      () => {
+        accounts.forEach((account) => {
+          refreshAccountTokenIfNeeded(account, userEmail)
+            .then(({ accessToken, expiresAt, refreshed }) => {
+              if (
+                refreshed ||
+                accessToken !== account.accessToken ||
+                expiresAt !== account.expiresAt
+              ) {
+                setAccounts((prev) =>
+                  prev.map((a) =>
+                    a.email === account.email
+                      ? { ...a, accessToken, expiresAt }
+                      : a,
+                  ),
+                );
+              }
+            })
+            .catch((e) => {
+              console.error("Failed to refresh token for", account.email, e);
+              setFailedAccounts((prev) => {
+                const next = prev.includes(account.email)
+                  ? prev
+                  : [...prev, account.email];
+                setError(`ACCOUNT_REFRESH_FAILED: ${next.join(", ")}`);
+                return next;
+              });
             });
-          });
-      });
-    }, 5 * 60 * 1000);
+        });
+      },
+      5 * 60 * 1000,
+    );
 
     return () => clearInterval(interval);
   }, [userEmail, accounts]);
@@ -120,7 +133,7 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
       await connectCalendarAccount(userEmail, accountEmail);
       await refreshAccounts();
     },
-    [userEmail, refreshAccounts]
+    [userEmail, refreshAccounts],
   );
 
   const removeAccount = useCallback(
@@ -129,7 +142,46 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
       await removeCalendarAccount(userEmail, accountEmail);
       await refreshAccounts();
     },
-    [userEmail, refreshAccounts]
+    [userEmail, refreshAccounts],
+  );
+
+  const setCalendarVisibility = useCallback(
+    async (accountEmail: string, calendarId: string, isVisible: boolean) => {
+      if (!userEmail) return;
+
+      const nextAccounts = accounts.map((account) =>
+        account.email !== accountEmail
+          ? account
+          : {
+              ...account,
+              calendars: (account.calendars || []).map((calendar) =>
+                calendar.id === calendarId
+                  ? { ...calendar, isVisible }
+                  : calendar,
+              ),
+            },
+      );
+
+      setAccounts(nextAccounts);
+
+      const targetAccount = nextAccounts.find(
+        (account) => account.email === accountEmail,
+      );
+      if (!targetAccount) return;
+
+      try {
+        await updateAccountCalendars(
+          userEmail,
+          accountEmail,
+          targetAccount.calendars || [],
+        );
+      } catch (error) {
+        console.error("Failed to update calendar visibility", error);
+        await refreshAccounts();
+        throw error;
+      }
+    },
+    [accounts, userEmail, refreshAccounts],
   );
 
   return {
@@ -141,5 +193,6 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     connectAccount,
     reauthAccount,
     removeAccount,
+    setCalendarVisibility,
   };
 };

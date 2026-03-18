@@ -7,9 +7,7 @@ import { CryptoWidget } from "./components/CryptoWidget";
 import { BibleWidget } from "./components/BibleWidget";
 import { NotepadWidget } from "./components/NotepadWidget";
 import { fetchWeather } from "./services/weatherService";
-import {
-  handleIdentityLogin,
-} from "./services/authService";
+import { handleIdentityLogin } from "./services/authService";
 import { GOOGLE_CLIENT_ID, ALLOWED_EMAILS } from "./config";
 import {
   Terminal,
@@ -45,7 +43,7 @@ const parseJwt = (token: string) => {
         .map(function (c) {
           return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
         })
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (e) {
@@ -106,9 +104,9 @@ const App: React.FC = () => {
   const [originUrl, setOriginUrl] = useState("");
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [firebaseAuthError, setFirebaseAuthError] = useState<string | null>(
-    null
+    null,
   );
-  
+
   const {
     accounts: calendarAccounts,
     loading: loadingAccounts,
@@ -118,6 +116,7 @@ const App: React.FC = () => {
     connectAccount: connectCalendarAccount,
     reauthAccount: reauthCalendarAccount,
     removeAccount: removeCalendarAccount,
+    setCalendarVisibility: setCalendarVisibility,
   } = useCalendarAccounts(user?.email || null);
 
   // Clock & Weather Effect
@@ -146,47 +145,47 @@ const App: React.FC = () => {
     }
   }, []);
 
-    // Handle Identity Login
-    const handleLogin = async () => {
-        setAuthError(null);
-        try {
-            await handleIdentityLogin();
-            // User state will be updated by onAuthStateChanged/localStorage logic if we wanted, 
-            // but for now we might need to manually set user if we aren't fully relying on onAuthStateChanged yet.
-            // Actually, handleIdentityLogin signs into Firebase.
-            // We should listen to onAuthStateChanged.
-        } catch (e: any) {
-            console.error("Login Failed", e);
-            setAuthError(e.message || "LOGIN_FAILED");
+  // Handle Identity Login
+  const handleLogin = async () => {
+    setAuthError(null);
+    try {
+      await handleIdentityLogin();
+      // User state will be updated by onAuthStateChanged/localStorage logic if we wanted,
+      // but for now we might need to manually set user if we aren't fully relying on onAuthStateChanged yet.
+      // Actually, handleIdentityLogin signs into Firebase.
+      // We should listen to onAuthStateChanged.
+    } catch (e: any) {
+      console.error("Login Failed", e);
+      setAuthError(e.message || "LOGIN_FAILED");
+    }
+  };
+
+  // Auth State Listener
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (firebaseUser) {
+        if (ALLOWED_EMAILS.includes(firebaseUser.email || "")) {
+          setUser({
+            email: firebaseUser.email!,
+            name: firebaseUser.displayName || "User",
+            picture: firebaseUser.photoURL || "",
+          });
+          setFirebaseAuthError(null);
+        } else {
+          setUser(null);
+          setAuthError("UNAUTHORIZED_USER");
+          auth.signOut();
         }
-    };
-    
-    // Auth State Listener
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-            if (firebaseUser) {
-                if (ALLOWED_EMAILS.includes(firebaseUser.email || "")) {
-                   setUser({
-                       email: firebaseUser.email!,
-                       name: firebaseUser.displayName || "User",
-                       picture: firebaseUser.photoURL || "",
-                   });
-                   setFirebaseAuthError(null);
-                } else {
-                    setUser(null);
-                    setAuthError("UNAUTHORIZED_USER");
-                    auth.signOut();
-                }
-            } else {
-                // Keep local user if we want manual logout, or clear it.
-                // For now, let's trust Firebase status.
-                // setUser(null); 
-                // Wait, existing logic uses localStorage for user. 
-                // Let's stick to existing pattern for now but update it when firebase updates.
-            }
-        });
-        return () => unsubscribe();
-    }, []);
+      } else {
+        // Keep local user if we want manual logout, or clear it.
+        // For now, let's trust Firebase status.
+        // setUser(null);
+        // Wait, existing logic uses localStorage for user.
+        // Let's stick to existing pattern for now but update it when firebase updates.
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -211,7 +210,7 @@ const App: React.FC = () => {
   const resizeWidget = (
     colIndex: number,
     itemIndex: number,
-    change: number
+    change: number,
   ) => {
     setLayout((prev) => {
       const column = prev[colIndex];
@@ -220,7 +219,7 @@ const App: React.FC = () => {
       if (newHeight < 0) return prev;
 
       const nextColumn = column.map((colItem, idx) =>
-        idx === itemIndex ? { ...colItem, heightLevel: newHeight } : colItem
+        idx === itemIndex ? { ...colItem, heightLevel: newHeight } : colItem,
       );
 
       return { ...prev, [colIndex]: nextColumn };
@@ -248,6 +247,7 @@ const App: React.FC = () => {
             accountError={calendarAccountError}
             failedAccounts={failedCalendarAccounts}
             onReauthAccount={reauthCalendarAccount}
+            onToggleCalendarVisibility={setCalendarVisibility}
           />
         );
       case WidgetType.AGENDA:
@@ -261,6 +261,7 @@ const App: React.FC = () => {
             accountError={calendarAccountError}
             failedAccounts={failedCalendarAccounts}
             onReauthAccount={reauthCalendarAccount}
+            onToggleCalendarVisibility={setCalendarVisibility}
           />
         );
 
@@ -311,9 +312,7 @@ const App: React.FC = () => {
 
               <Separator />
 
-              <div className="text-nav">
-                {currentTime.toLocaleDateString()}
-              </div>
+              <div className="text-nav">{currentTime.toLocaleDateString()}</div>
 
               <Separator />
 
@@ -383,11 +382,11 @@ const App: React.FC = () => {
             <div className="w-full max-w-md bg-nord-0 border-2 border-nord-3 rounded-2xl shadow-2xl overflow-hidden">
               {/* Header */}
               <div className="bg-nord-1 px-6 py-4 border-b-2 border-nord-3 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-nav text-lg tracking-widest font-mono">
-                <Lock size={20} className="text-nord-9" />
-                SYSTEM ACCESS
+                <div className="flex items-center gap-3 text-nav text-lg tracking-widest font-mono">
+                  <Lock size={20} className="text-nord-9" />
+                  SYSTEM ACCESS
+                </div>
               </div>
-            </div>
 
               {/* Body */}
               <div className="p-8 flex flex-col items-center text-center">
@@ -395,9 +394,7 @@ const App: React.FC = () => {
                   <User size={48} />
                 </div>
 
-                <h2 className="text-section mb-2">
-                  Welcome Back
-                </h2>
+                <h2 className="text-section mb-2">Welcome Back</h2>
                 <p className="text-nord-4 mb-8 text-sm leading-relaxed opacity-80 max-w-xs">
                   Please sign in to access your personal dashboard and
                   synchronize your data.

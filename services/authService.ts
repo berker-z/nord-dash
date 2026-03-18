@@ -40,23 +40,55 @@ const getDocRef = (email: string) => doc(db, "users", email);
 const getAccountRef = (userEmail: string, accountEmail: string) =>
   doc(db, "users", userEmail, "calendarAccounts", accountEmail);
 
-const normalizeToPrimaryCalendar = (
+const normalizeCalendars = (
   calendars: CalendarConfig[],
   accountEmail?: string,
 ): CalendarConfig[] => {
   if (!calendars || calendars.length === 0) return [];
-  const primary =
-    calendars.find((cal) => cal.primary) ||
-    calendars.find((cal) => cal.id === accountEmail) ||
-    calendars.find((cal) => cal.id === "primary") ||
-    calendars[0];
-  return [
-    {
-      ...primary,
-      primary: true,
+  return calendars.map((calendar, index) => ({
+    ...calendar,
+    primary:
+      !!calendar.primary ||
+      calendar.id === accountEmail ||
+      calendar.id === "primary",
+    isVisible: calendar.isVisible ?? true,
+    summary:
+      calendar.summary ||
+      (calendar.id === accountEmail || calendar.id === "primary"
+        ? "Primary"
+        : `Calendar ${index + 1}`),
+  }));
+};
+
+const mapGoogleCalendars = (rawCalendars: any[]): CalendarConfig[] =>
+  normalizeCalendars(
+    rawCalendars.map((c: any) => ({
+      id: c.id,
+      summary: c.summary,
+      colorId: c.colorId,
+      backgroundColor: c.backgroundColor,
+      foregroundColor: c.foregroundColor,
+      accessRole: c.accessRole,
+      primary: !!c.primary || c.id === "primary",
       isVisible: true,
-    },
-  ];
+    })),
+  );
+
+const mergeCalendarVisibility = (
+  existing: CalendarConfig[],
+  incoming: CalendarConfig[],
+): CalendarConfig[] => {
+  const visibilityById = new Map(
+    (existing || []).map((calendar) => [
+      calendar.id,
+      calendar.isVisible ?? true,
+    ]),
+  );
+
+  return incoming.map((calendar) => ({
+    ...calendar,
+    isVisible: visibilityById.get(calendar.id) ?? calendar.isVisible ?? true,
+  }));
 };
 
 // --- Core Auth Logic ---
@@ -230,16 +262,7 @@ const saveCalendarAccount = async (
   let calendars: CalendarConfig[] = [];
   try {
     const rawCalendars = await listCalendars(tokens.access_token);
-    calendars = rawCalendars.map((c: any) => ({
-      id: c.id,
-      summary: c.summary,
-      colorId: c.colorId,
-      backgroundColor: c.backgroundColor,
-      foregroundColor: c.foregroundColor,
-      accessRole: c.accessRole,
-      primary: !!c.primary || c.id === "primary",
-      isVisible: true, // Default to visible
-    }));
+    calendars = mapGoogleCalendars(rawCalendars);
   } catch (e) {
     console.warn("Could not fetch initial calendars", e);
   }
@@ -251,7 +274,7 @@ const saveCalendarAccount = async (
     expiresAt: Date.now() + tokens.expires_in * 1000,
     name: profile.name,
     picture: profile.picture,
-    calendars: normalizeToPrimaryCalendar(calendars, accountEmail),
+    calendars: normalizeCalendars(calendars, accountEmail),
   };
 
   // If we are updating an existing account and missing a refresh token in the response,
@@ -277,7 +300,7 @@ export const getConnectedAccounts = async (
     const data = d.data() as CalendarAccount;
     return {
       ...data,
-      calendars: normalizeToPrimaryCalendar(data.calendars || [], data.email),
+      calendars: normalizeCalendars(data.calendars || [], data.email),
     };
   });
 };
@@ -296,8 +319,22 @@ export const updateAccountCalendars = async (
   calendars: CalendarConfig[],
 ) => {
   await updateDoc(getAccountRef(userEmail, accountEmail), {
-    calendars: normalizeToPrimaryCalendar(calendars, accountEmail),
+    calendars: normalizeCalendars(calendars, accountEmail),
   });
+};
+
+export const syncAccountCalendars = async (
+  account: CalendarAccount,
+  userEmail: string,
+): Promise<CalendarConfig[]> => {
+  const rawCalendars = await listCalendars(account.accessToken);
+  const mergedCalendars = mergeCalendarVisibility(
+    normalizeCalendars(account.calendars || [], account.email),
+    mapGoogleCalendars(rawCalendars),
+  );
+
+  await updateAccountCalendars(userEmail, account.email, mergedCalendars);
+  return mergedCalendars;
 };
 
 export const removeCalendarAccount = async (
