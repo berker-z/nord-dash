@@ -11,8 +11,10 @@
 ### Auth & Tokens
 
 - Login uses the Google OAuth **code client** (`handleIdentityLogin` in `authService`), exchanges the code for `access_token`, `refresh_token`, `expires_in`, and enforces `ALLOWED_EMAILS` _before_ signing into Firebase (`signInWithCredential`).
+- Account persistence is fail-closed: if Google does not return a `refresh_token` and there is no previously stored refresh token for that account, the save step now throws `CALENDAR_REFRESH_TOKEN_MISSING` instead of writing an access-token-only account.
 - Calendar tokens are stored per account in Firestore at `users/{ownerEmail}/calendarAccounts/{accountEmail}` with `accessToken`, `refreshToken`, `expiresAt`, and `calendars[]`.
 - `useCalendarAccounts` loads accounts, refreshes tokens ~5 minutes before expiry (`refreshAccountTokenIfNeeded`), and writes refreshed tokens back to Firestore so other devices can reuse them.
+- Google token endpoint errors now preserve `error`, `error_subtype`, and `error_description`; when refresh returns `invalid_grant`, the UI now points at the two likely causes: revoked token, or an OAuth consent screen that is still in Testing (calendar refresh tokens expire after 7 days there).
 - Logout calls `auth.signOut()` and clears local user state; calendar account data persists in Firestore for reuse.
 
 ### Calendar Data & UI
@@ -38,7 +40,7 @@
 
 - Todos: `services/todoService.ts` uses Firestore transactions; `subscribeTodos` sets/initializes `users/{email}` with `{ todos: [] }`.
 - Crypto: Binance + CoinGecko; CoinGecko uses `COINGECKO_API_KEY` (process env) for `x-cg-demo-api-key`.
-- Bible: OpenAI `gpt-5-nano` via `openaiService.ts`.
+- Bible: OpenAI `gpt-5.4-nano` via `openaiService.ts`, using `POST /v1/responses` with strict JSON schema output.
 - Weather: Open-Meteo, public.
 
 ## Strengths
@@ -51,10 +53,12 @@
 
 - Calendar list in Firestore is refreshed on account load, but the account modal still has no explicit loading/error state per checkbox toggle.
 - Account errors still surface as terse error codes; re-auth exists per account, but broader sync failures are still not very descriptive.
+- The last remaining root-cause check lives in Google Cloud, not this repo: if the OAuth consent screen is still `Testing`, newly issued calendar refresh tokens will continue expiring after 7 days no matter what the frontend does.
 - Firestore rules are not documented in-repo (risk of drift).
 
 ## Next Actions (targeted)
 
 1. Add inline loading/disabled states for calendar visibility toggles while Firestore updates are in flight.
 2. Improve per-calendar labels in the account modal so Google-generated holiday/observance calendars are easier to spot.
-3. Check in Firestore rules and reference them here.
+3. Verify/publish the Google OAuth consent screen so calendar refresh tokens are eligible for long-lived renewal.
+4. Check in Firestore rules and reference them here.

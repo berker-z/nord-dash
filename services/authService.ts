@@ -23,6 +23,12 @@ interface TokenResponse {
   token_type: string;
 }
 
+interface OAuthErrorResponse {
+  error?: string;
+  error_description?: string;
+  error_subtype?: string;
+}
+
 interface OAuthCodeClientConfig {
   client_id: string;
   scope: string;
@@ -39,6 +45,24 @@ interface OAuthCodeClientConfig {
 const getDocRef = (email: string) => doc(db, "users", email);
 const getAccountRef = (userEmail: string, accountEmail: string) =>
   doc(db, "users", userEmail, "calendarAccounts", accountEmail);
+
+const buildOAuthError = (
+  data: OAuthErrorResponse | undefined,
+  fallbackMessage: string,
+) => {
+  const parts = [
+    data?.error,
+    data?.error_subtype,
+    data?.error_description || fallbackMessage,
+  ].filter(Boolean);
+
+  const error = new Error(parts.join(": "));
+  Object.assign(error, {
+    code: data?.error,
+    subtype: data?.error_subtype,
+  });
+  return error;
+};
 
 const normalizeCalendars = (
   calendars: CalendarConfig[],
@@ -107,6 +131,7 @@ export const handleIdentityLogin = async (): Promise<void> => {
       prompt: "consent",
       callback: async (response: any) => {
         if (response.code) {
+          let signedIntoFirebase = false;
           try {
             // 1. Exchange Code
             const tokens = await exchangeCodeForToken(response.code);
@@ -123,6 +148,7 @@ export const handleIdentityLogin = async (): Promise<void> => {
               tokens.access_token,
             );
             await signInWithCredential(auth, credential);
+            signedIntoFirebase = true;
 
             // 4. Persist Primary Account Tokens
             // The primary account is also a "Calendar Account"
@@ -135,6 +161,14 @@ export const handleIdentityLogin = async (): Promise<void> => {
 
             resolve();
           } catch (e) {
+            if (signedIntoFirebase) {
+              await auth.signOut().catch((signOutError) => {
+                console.error(
+                  "Failed to roll back Firebase auth after calendar auth error",
+                  signOutError,
+                );
+              });
+            }
             console.error("Identity Login Failed", e);
             reject(e);
           }
@@ -158,12 +192,12 @@ export const connectCalendarAccount = async (
 
     const clientConfig: OAuthCodeClientConfig = {
       client_id: GOOGLE_CLIENT_ID,
-      scope: "email profile https://www.googleapis.com/auth/calendar",
+      scope: "openid email profile https://www.googleapis.com/auth/calendar",
       ux_mode: "popup",
       hint: hintEmail,
       access_type: "offline",
       include_granted_scopes: true,
-      prompt: hintEmail ? "select_account consent" : "consent",
+      prompt: "select_account consent",
       callback: async (response: any) => {
         if (response.code) {
           try {
@@ -182,6 +216,8 @@ export const connectCalendarAccount = async (
             console.error("Connect Calendar Failed", e);
             reject(e);
           }
+        } else {
+          reject(new Error(response.error || "No code returned"));
         }
       },
     };
@@ -214,8 +250,7 @@ const exchangeCodeForToken = async (code: string): Promise<TokenResponse> => {
   });
 
   const data = await response.json();
-  if (!response.ok)
-    throw new Error(data.error_description || "Token Exchange Failed");
+  if (!response.ok) throw buildOAuthError(data, "Token Exchange Failed");
   return data;
 };
 
@@ -238,8 +273,7 @@ const refreshOAuthToken = async (
   });
 
   const data = await response.json();
-  if (!response.ok)
-    throw new Error(data.error_description || "Token Refresh Failed");
+  if (!response.ok) throw buildOAuthError(data, "Token Refresh Failed");
   return data;
 };
 
@@ -258,6 +292,20 @@ const saveCalendarAccount = async (
   });
   if (!ownerEmail) throw new Error("Owner Email is missing");
   if (!accountEmail) throw new Error("Account Email is missing");
+
+  const existingDoc = await getDoc(getAccountRef(ownerEmail, accountEmail));
+  const existingRefreshToken = existingDoc.exists()
+    ? String(existingDoc.data().refreshToken || "").trim()
+    : "";
+  const resolvedRefreshToken =
+    tokens.refresh_token?.trim() || existingRefreshToken;
+
+  if (!resolvedRefreshToken) {
+    throw new Error(
+      `CALENDAR_REFRESH_TOKEN_MISSING: ${accountEmail}. Google did not issue a refresh token, so this account would require manual re-auth again after the access token expires.`,
+    );
+  }
+
   // 1. Fetch available calendars for this account to initialize config
   let calendars: CalendarConfig[] = [];
   try {
@@ -270,21 +318,12 @@ const saveCalendarAccount = async (
   const accountData: CalendarAccount = {
     email: accountEmail,
     accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token || "", // Should exist on first connect
+    refreshToken: resolvedRefreshToken,
     expiresAt: Date.now() + tokens.expires_in * 1000,
     name: profile.name,
     picture: profile.picture,
     calendars: normalizeCalendars(calendars, accountEmail),
   };
-
-  // If we are updating an existing account and missing a refresh token in the response,
-  // we must NOT overwrite the existing refresh token with empty string.
-  if (!accountData.refreshToken) {
-    const existingDoc = await getDoc(getAccountRef(ownerEmail, accountEmail));
-    if (existingDoc.exists()) {
-      accountData.refreshToken = existingDoc.data().refreshToken;
-    }
-  }
 
   await setDoc(getAccountRef(ownerEmail, accountEmail), accountData, {
     merge: true,
@@ -394,4 +433,19 @@ export const refreshAccountTokenIfNeeded = async (
     expiresAt: account.expiresAt,
     refreshed: false,
   };
+};
+
+export const getCalendarAuthErrorMessage = (error: unknown) => {
+  const message =
+    error instanceof Error ? error.message : String(error || "Unknown error");
+
+  if (message.includes("CALENDAR_REFRESH_TOKEN_MISSING")) {
+    return message;
+  }
+
+  if (message.includes("invalid_grant")) {
+    return `${message}. Google rejected the stored refresh token. The common causes are token revocation or an OAuth consent screen that is still in Testing, where calendar refresh tokens expire after 7 days.`;
+  }
+
+  return message;
 };

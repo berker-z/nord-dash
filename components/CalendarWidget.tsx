@@ -234,7 +234,11 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
               </span>
               {onReauthAccount && (
                 <button
-                  onClick={() => onReauthAccount(failedAccounts[0])}
+                  onClick={() => {
+                    void onReauthAccount(failedAccounts[0]).catch(
+                      () => undefined,
+                    );
+                  }}
                   className="ml-auto text-[11px] px-2 py-1 border border-nord-11/60 rounded hover:bg-nord-11/10 transition-colors"
                 >
                   Re-auth first

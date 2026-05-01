@@ -7,7 +7,10 @@ import { CryptoWidget } from "./components/CryptoWidget";
 import { BibleWidget } from "./components/BibleWidget";
 import { NotepadWidget } from "./components/NotepadWidget";
 import { fetchWeather } from "./services/weatherService";
-import { handleIdentityLogin } from "./services/authService";
+import {
+  handleIdentityLogin,
+  getCalendarAuthErrorMessage,
+} from "./services/authService";
 import { GOOGLE_CLIENT_ID, ALLOWED_EMAILS } from "./config";
 import {
   Terminal,
@@ -156,7 +159,7 @@ const App: React.FC = () => {
       // We should listen to onAuthStateChanged.
     } catch (e: any) {
       console.error("Login Failed", e);
-      setAuthError(e.message || "LOGIN_FAILED");
+      setAuthError(getCalendarAuthErrorMessage(e));
     }
   };
 
@@ -202,7 +205,7 @@ const App: React.FC = () => {
       await connectCalendarAccount();
     } catch (e) {
       console.error("Failed to connect calendar", e);
-      alert("Failed to connect calendar");
+      alert(getCalendarAuthErrorMessage(e));
     }
   };
 

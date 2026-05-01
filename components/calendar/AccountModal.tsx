@@ -131,7 +131,9 @@ export const AccountModal: React.FC<Props> = ({
                     </button>
                     {isFailed && onReauthAccount && (
                       <button
-                        onClick={() => onReauthAccount(acc.email)}
+                        onClick={() => {
+                          void onReauthAccount(acc.email).catch(() => undefined);
+                        }}
                         className="px-3 py-2 text-[12px] border border-nord-9/60 text-nord-9 rounded hover:bg-nord-9/10 transition-colors"
                         title="Re-authenticate this account"
                       >

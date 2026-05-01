@@ -13,8 +13,10 @@
 ## Auth & Security Flow
 
 - Login (`authService.handleIdentityLogin`): Google OAuth code client requests offline access with explicit consent, exchanges the code for access/refresh tokens, checks the whitelist, then signs into Firebase with the Google credential.
+- Calendar auth persistence is now fail-closed: if Google returns no `refresh_token` and no previously stored refresh token exists, `saveCalendarAccount` throws `CALENDAR_REFRESH_TOKEN_MISSING` instead of saving an access-token-only account that would break on the next expiry.
 - Calendar accounts stored at `users/{ownerEmail}/calendarAccounts/{accountEmail}` with `accessToken`, `refreshToken`, `expiresAt`, `calendars[]`, profile info.
 - Refresh: `useCalendarAccounts` loads accounts, refreshes tokens near/after expiry via `refreshAccountTokenIfNeeded`, persists updates to Firestore, and runs a 5-minute interval. Accounts missing a stored refresh token now fail with an explicit `MISSING_REFRESH_TOKEN` error so the UI can route the user into re-consent instead of silently retrying.
+- Token errors now keep Google’s `invalid_grant` details, and the UI surfaces the likely Google-side cause: revoked token or an OAuth consent screen that is still in Testing, where calendar refresh tokens expire after 7 days.
 - Logout: `auth.signOut()`, local user cleared; Firestore calendar docs remain for reuse. Firestore rules restrict access to the signed-in email.
 
 ## Data Sources
@@ -23,7 +25,7 @@
 - Firestore (Firebase Auth) — todos and calendar account tokens/metadata.
 - Binance + CoinGecko (API key gated) — crypto prices/dominance/NFT floors.
 - Open-Meteo — current weather.
-- OpenAI GPT-5 nano — Bible quote of the day.
+- OpenAI GPT-5.4 nano via the Responses API — Bible quote of the day.
 
 ## Feature Modules
 
@@ -31,7 +33,7 @@
 - Calendar diagnostics: failed `calendarList` calls now log Google HTTP status + body so Workspace/API restriction issues can be identified instead of appearing as a silent empty account.
 - Todos: Firestore-backed list with transactions and realtime `onSnapshot` updates.
 - Crypto: Fast Binance pairs plus slower CoinGecko metrics when `COINGECKO_API_KEY` is present.
-- Bible: Structured `{ reference, text }` responses from OpenAI via `gpt-5-nano`.
+- Bible: Structured `{ reference, text }` responses from OpenAI via `gpt-5.4-nano` on `POST /v1/responses` with strict JSON schema output.
 - Weather: One-off fetch on load from Open-Meteo.
 - Notepad: Firebase-backed notes stored under `users/{email}/notes/{noteId}` with manual save (autosave TBD), icon-only controls (new/load/save), modal picker that lists notes by name/snippet, autosizing textarea. Lives under the agenda in the left column.
 

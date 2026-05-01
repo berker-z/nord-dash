@@ -2,6 +2,7 @@
 
 ## In Progress / Next
 
+- [ ] Verify the Google OAuth consent screen is set to `In production`; `Testing` mode causes calendar refresh tokens to expire after 7 days.
 - [ ] Calendar account modal: polish per-account calendar visibility controls (loading states / clearer role labels if needed).
 - [x] Surface re-auth CTA when token refresh fails (per-account).
 - [x] Show which calendar accounts failed to refresh so the user can re-auth them.
@@ -11,7 +12,9 @@
 
 ## Completed (current pass)
 
-- [x] Switched the Bible quote OpenAI model from `gpt-4o` to `gpt-5-nano` and removed unsupported GPT-5 sampling params.
+- [x] Moved the Bible widget from OpenAI Chat Completions to the Responses API and upgraded it to `gpt-5.4-nano` with strict JSON schema output.
+- [x] Stopped saving calendar accounts without a refresh token, preserved real Google OAuth error details (`invalid_grant`), and rolled back Firebase login if the primary calendar account cannot be persisted durably.
+- [x] Switched the Bible quote OpenAI model off `gpt-4o` and removed unsupported GPT-5 sampling params.
 - [x] Improved calendar-list diagnostics so Google Calendar API status/body is logged instead of silently collapsing account metadata to an empty calendar list.
 - [x] Replaced primary-only calendar sync with per-account calendar visibility controls, synced calendar metadata from Google on refresh, and fetched events from all visible calendars.
 - [x] Kept event editing pinned to the source calendar and allowed create flow to target writable calendars when more than one is available.

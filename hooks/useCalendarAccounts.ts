@@ -7,6 +7,7 @@ import {
   removeCalendarAccount,
   syncAccountCalendars,
   updateAccountCalendars,
+  getCalendarAuthErrorMessage,
 } from "../services/authService";
 
 interface Result {
@@ -123,15 +124,28 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
 
   const connectAccount = useCallback(async () => {
     if (!userEmail) return;
-    await connectCalendarAccount(userEmail);
-    await refreshAccounts();
+    setError(null);
+    try {
+      await connectCalendarAccount(userEmail);
+      await refreshAccounts();
+    } catch (error) {
+      const message = getCalendarAuthErrorMessage(error);
+      setError(message);
+      throw error;
+    }
   }, [userEmail, refreshAccounts]);
 
   const reauthAccount = useCallback(
     async (accountEmail: string) => {
       if (!userEmail) return;
-      await connectCalendarAccount(userEmail, accountEmail);
-      await refreshAccounts();
+      setError(null);
+      try {
+        await connectCalendarAccount(userEmail, accountEmail);
+        await refreshAccounts();
+      } catch (error) {
+        setError(getCalendarAuthErrorMessage(error));
+        throw error;
+      }
     },
     [userEmail, refreshAccounts],
   );

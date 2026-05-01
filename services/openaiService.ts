@@ -1,6 +1,22 @@
 import { BibleQuote } from "../types";
 
-const OPENAI_MODEL = "gpt-5-nano";
+const OPENAI_MODEL = "gpt-5.4-nano";
+
+const BIBLE_QUOTE_SCHEMA = {
+  type: "object",
+  properties: {
+    reference: {
+      type: "string",
+      description: "Bible reference in Book Chapter:StartVerse-EndVerse format.",
+    },
+    text: {
+      type: "string",
+      description: "The full passage text for the selected verses.",
+    },
+  },
+  required: ["reference", "text"],
+  additionalProperties: false,
+} as const;
 
 export const getBibleQuote = async (feeling: string): Promise<BibleQuote> => {
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -23,7 +39,7 @@ Return ONLY a valid JSON object with this exact structure:
   "text": "The full passage text"
 }`;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -31,7 +47,7 @@ Return ONLY a valid JSON object with this exact structure:
       },
       body: JSON.stringify({
         model: OPENAI_MODEL,
-        messages: [
+        input: [
           {
             role: "system",
             content:
@@ -42,17 +58,25 @@ Return ONLY a valid JSON object with this exact structure:
             content: prompt,
           },
         ],
-        response_format: { type: "json_object" },
-        max_tokens: 600,
+        text: {
+          format: {
+            type: "json_schema",
+            name: "bible_quote",
+            schema: BIBLE_QUOTE_SCHEMA,
+            strict: true,
+          },
+        },
+        max_output_tokens: 600,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorBody = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} ${errorBody}`);
     }
 
     const data = await response.json();
-    const content = data.choices[0]?.message?.content;
+    const content = data.output_text;
 
     if (!content) {
       throw new Error("No content in response");
