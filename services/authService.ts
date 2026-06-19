@@ -36,14 +36,29 @@ interface OAuthCodeClientConfig {
   callback: (response: any) => Promise<void>;
   error_callback?: (error: { type?: string }) => void;
   login_hint?: string;
-  access_type: "offline";
+  access_type?: "offline";
   include_granted_scopes: boolean;
-  prompt: "consent" | "select_account consent";
+  prompt?: string;
 }
 
-const GOOGLE_OAUTH_SCOPE =
-  "openid email profile https://www.googleapis.com/auth/calendar";
-const IDENTITY_REDIRECT_STATE_KEY = "nord_identity_oauth_state";
+const IDENTITY_SCOPE = "openid email profile";
+const CALENDAR_SCOPE = [
+  "openid",
+  "email",
+  "profile",
+  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+].join(" ");
+const OAUTH_REDIRECT_STATE_KEY = "nord_oauth_redirect_state";
+
+type OAuthRedirectPurpose = "identity" | "calendar";
+
+interface StoredOAuthRedirect {
+  state: string;
+  purpose: OAuthRedirectPurpose;
+  ownerEmail?: string;
+  expectedAccountEmail?: string;
+}
 
 // --- Helpers ---
 
@@ -99,6 +114,12 @@ export const isGooglePopupOpenFailure = (error: unknown) =>
     (error as Error & { code?: string }).code ===
       "GOOGLE_POPUP_FAILED_TO_OPEN");
 
+const createError = (message: string, code?: string) => {
+  const error = new Error(message);
+  if (code) Object.assign(error, { code });
+  return error;
+};
+
 const getOAuthRedirectUri = () => window.location.origin;
 
 const createOAuthState = () => {
@@ -107,6 +128,28 @@ const createOAuthState = () => {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(8, "0")).join(
     "",
   );
+};
+
+const storeOAuthRedirectState = (
+  purpose: OAuthRedirectPurpose,
+  extra: Omit<StoredOAuthRedirect, "state" | "purpose"> = {},
+) => {
+  const state = createOAuthState();
+  sessionStorage.setItem(
+    OAUTH_REDIRECT_STATE_KEY,
+    JSON.stringify({ state, purpose, ...extra }),
+  );
+  return state;
+};
+
+const getStoredOAuthRedirectState = (): StoredOAuthRedirect | null => {
+  const raw = sessionStorage.getItem(OAUTH_REDIRECT_STATE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as StoredOAuthRedirect;
+  } catch {
+    return null;
+  }
 };
 
 const cleanOAuthParamsFromUrl = () => {
@@ -170,18 +213,28 @@ const mergeCalendarVisibility = (
 
 // --- Core Auth Logic ---
 
-export const handleIdentityLogin = async (): Promise<void> => {
+const requestOAuthCode = async ({
+  scope,
+  prompt,
+  loginHint,
+  accessType,
+  includeGrantedScopes = false,
+}: {
+  scope: string;
+  prompt?: string;
+  loginHint?: string;
+  accessType?: "offline";
+  includeGrantedScopes?: boolean;
+}) => {
   return new Promise((resolve, reject) => {
     if (!window.google || !window.google.accounts)
       return reject("Google API not loaded");
 
     const clientConfig: OAuthCodeClientConfig = {
       client_id: GOOGLE_CLIENT_ID,
-      scope: GOOGLE_OAUTH_SCOPE,
+      scope,
       ux_mode: "popup",
-      access_type: "offline",
-      include_granted_scopes: true,
-      prompt: "consent",
+      include_granted_scopes: includeGrantedScopes,
       callback: async (response: any) => {
         if (response.error) {
           reject(buildOAuthError(response, "Google authorization failed"));
@@ -189,13 +242,7 @@ export const handleIdentityLogin = async (): Promise<void> => {
         }
 
         if (response.code) {
-          try {
-            await completeIdentityLoginWithCode(response.code);
-            resolve();
-          } catch (e) {
-            console.error("Identity Login Failed", e);
-            reject(e);
-          }
+          resolve(response.code);
         } else {
           reject("No code returned");
         }
@@ -204,23 +251,38 @@ export const handleIdentityLogin = async (): Promise<void> => {
         reject(buildGooglePopupError(error?.type));
       },
     };
+    if (prompt) clientConfig.prompt = prompt;
+    if (loginHint) clientConfig.login_hint = loginHint;
+    if (accessType) clientConfig.access_type = accessType;
+
     const client = window.google.accounts.oauth2.initCodeClient(clientConfig);
     client.requestCode();
   });
 };
 
+export const handleIdentityLogin = async (): Promise<void> => {
+  try {
+    const code = await requestOAuthCode({
+      scope: IDENTITY_SCOPE,
+      prompt: "select_account",
+    });
+    await completeIdentityLoginWithCode(String(code));
+  } catch (e) {
+    console.error("Identity Login Failed", e);
+    throw e;
+  }
+};
+
 export const startIdentityRedirectLogin = () => {
-  const state = createOAuthState();
-  sessionStorage.setItem(IDENTITY_REDIRECT_STATE_KEY, state);
+  const state = storeOAuthRedirectState("identity");
 
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: getOAuthRedirectUri(),
     response_type: "code",
-    scope: GOOGLE_OAUTH_SCOPE,
-    access_type: "offline",
-    include_granted_scopes: "true",
-    prompt: "consent",
+    scope: IDENTITY_SCOPE,
+    include_granted_scopes: "false",
+    prompt: "select_account",
     state,
   });
 
@@ -229,7 +291,36 @@ export const startIdentityRedirectLogin = () => {
   );
 };
 
-export const completeIdentityRedirectLogin = async () => {
+const startCalendarRedirectConnection = (
+  ownerEmail: string,
+  expectedAccountEmail?: string,
+) => {
+  const state = storeOAuthRedirectState("calendar", {
+    ownerEmail,
+    expectedAccountEmail,
+  });
+
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: getOAuthRedirectUri(),
+    response_type: "code",
+    scope: CALENDAR_SCOPE,
+    access_type: "offline",
+    include_granted_scopes: "false",
+    prompt: "select_account consent",
+    state,
+  });
+
+  if (expectedAccountEmail) {
+    params.set("login_hint", expectedAccountEmail);
+  }
+
+  window.location.assign(
+    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+  );
+};
+
+export const completeOAuthRedirect = async () => {
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
   const error = params.get("error");
@@ -242,15 +333,32 @@ export const completeIdentityRedirectLogin = async () => {
     }
 
     const returnedState = params.get("state");
-    const expectedState = sessionStorage.getItem(IDENTITY_REDIRECT_STATE_KEY);
-    if (!expectedState || returnedState !== expectedState) {
+    const storedState = getStoredOAuthRedirectState();
+    if (!storedState || returnedState !== storedState.state) {
       throw new Error("GOOGLE_REDIRECT_STATE_MISMATCH");
     }
 
-    await completeIdentityLoginWithCode(code);
-    return true;
+    if (storedState.purpose === "identity") {
+      await completeIdentityLoginWithCode(code);
+      return "identity";
+    }
+
+    if (storedState.purpose === "calendar") {
+      if (!storedState.ownerEmail) {
+        throw new Error("CALENDAR_REDIRECT_OWNER_MISSING");
+      }
+
+      await completeCalendarConnectionWithCode(
+        storedState.ownerEmail,
+        code,
+        storedState.expectedAccountEmail,
+      );
+      return "calendar";
+    }
+
+    throw new Error("GOOGLE_REDIRECT_PURPOSE_UNKNOWN");
   } finally {
-    sessionStorage.removeItem(IDENTITY_REDIRECT_STATE_KEY);
+    sessionStorage.removeItem(OAUTH_REDIRECT_STATE_KEY);
     cleanOAuthParamsFromUrl();
   }
 };
@@ -259,52 +367,27 @@ export const connectCalendarAccount = async (
   currentUserEmail: string,
   hintEmail?: string,
 ): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if (!window.google || !window.google.accounts)
-      return reject("Google API not loaded");
-
-    const clientConfig: OAuthCodeClientConfig = {
-      client_id: GOOGLE_CLIENT_ID,
-      scope: GOOGLE_OAUTH_SCOPE,
-      ux_mode: "popup",
-      login_hint: hintEmail,
-      access_type: "offline",
-      include_granted_scopes: true,
+  try {
+    const code = await requestOAuthCode({
+      scope: CALENDAR_SCOPE,
       prompt: "select_account consent",
-      callback: async (response: any) => {
-        if (response.error) {
-          reject(buildOAuthError(response, "Google authorization failed"));
-          return;
-        }
-
-        if (response.code) {
-          try {
-            const tokens = await exchangeCodeForToken(response.code);
-            const profile = await fetchUserProfile(tokens.access_token);
-
-            // Save as a sub-document under the current user
-            await saveCalendarAccount(
-              currentUserEmail,
-              profile.email,
-              tokens,
-              profile,
-            );
-            resolve();
-          } catch (e) {
-            console.error("Connect Calendar Failed", e);
-            reject(e);
-          }
-        } else {
-          reject(new Error(response.error || "No code returned"));
-        }
-      },
-      error_callback: (error) => {
-        reject(buildGooglePopupError(error?.type));
-      },
-    };
-    const client = window.google.accounts.oauth2.initCodeClient(clientConfig);
-    client.requestCode();
-  });
+      loginHint: hintEmail,
+      accessType: "offline",
+    });
+    await completeCalendarConnectionWithCode(
+      currentUserEmail,
+      String(code),
+      hintEmail,
+    );
+  } catch (e) {
+    if (isGooglePopupOpenFailure(e)) {
+      startCalendarRedirectConnection(currentUserEmail, hintEmail);
+      await new Promise<void>(() => undefined);
+      return;
+    }
+    console.error("Connect Calendar Failed", e);
+    throw e;
+  }
 };
 
 // --- Token Management ---
@@ -373,8 +456,6 @@ const completeIdentityLoginWithCode = async (code: string) => {
     const credential = GoogleAuthProvider.credential(null, tokens.access_token);
     await signInWithCredential(auth, credential);
     signedIntoFirebase = true;
-
-    await saveCalendarAccount(profile.email, profile.email, tokens, profile);
   } catch (e) {
     if (signedIntoFirebase) {
       await auth.signOut().catch((signOutError) => {
@@ -386,6 +467,27 @@ const completeIdentityLoginWithCode = async (code: string) => {
     }
     throw e;
   }
+};
+
+const completeCalendarConnectionWithCode = async (
+  ownerEmail: string,
+  code: string,
+  expectedAccountEmail?: string,
+) => {
+  const tokens = await exchangeCodeForToken(code);
+  const profile = await fetchUserProfile(tokens.access_token);
+
+  if (
+    expectedAccountEmail &&
+    profile.email.toLowerCase() !== expectedAccountEmail.toLowerCase()
+  ) {
+    throw createError(
+      `CALENDAR_REAUTH_ACCOUNT_MISMATCH: Expected ${expectedAccountEmail}, but Google returned ${profile.email}.`,
+      "CALENDAR_REAUTH_ACCOUNT_MISMATCH",
+    );
+  }
+
+  await saveCalendarAccount(ownerEmail, profile.email, tokens, profile);
 };
 
 const saveCalendarAccount = async (

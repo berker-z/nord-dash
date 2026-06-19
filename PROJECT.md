@@ -12,10 +12,11 @@
 
 ## Auth & Security Flow
 
-- Login (`authService.handleIdentityLogin`): Google OAuth code client requests offline access with explicit consent, exchanges the code for access/refresh tokens, checks the whitelist, then signs into Firebase with the Google credential.
-- Google Identity Services failure modes are handled explicitly: script load timeout and OAuth callback errors surface inline; if a browser refuses the GIS popup open on the deployed origin, login falls back to a full-page Google OAuth redirect and completes the same Firebase/calendar persistence flow on return.
+- Login (`authService.handleIdentityLogin`): Google OAuth code client requests identity-only scopes (`openid email profile`), exchanges the code for an access token, checks the whitelist, then signs into Firebase with the Google credential. Dashboard sign-in does not request Calendar offline consent and does not mint/replace Calendar refresh tokens.
+- Calendar authorization (`authService.connectCalendarAccount`): explicit account connect/re-auth requests offline Calendar access with the narrower `calendar.events` + `calendar.calendarlist.readonly` scopes, then persists the refresh token under `users/{ownerEmail}/calendarAccounts/{accountEmail}`.
+- Google Identity Services failure modes are handled explicitly: script load timeout and OAuth callback errors surface inline; if a browser refuses the GIS popup open on the deployed origin, identity and calendar auth fall back to a full-page Google OAuth redirect and complete the same flow on return.
 - Calendar auth persistence is now fail-closed: if Google returns no `refresh_token` and no previously stored refresh token exists, `saveCalendarAccount` throws `CALENDAR_REFRESH_TOKEN_MISSING` instead of saving an access-token-only account that would break on the next expiry.
-- Calendar accounts stored at `users/{ownerEmail}/calendarAccounts/{accountEmail}` with `accessToken`, `refreshToken`, `expiresAt`, `calendars[]`, profile info.
+- Calendar accounts stored at `users/{ownerEmail}/calendarAccounts/{accountEmail}` with `accessToken`, `refreshToken`, `expiresAt`, `calendars[]`, profile info. Re-auth enforces that Google returns the expected account email before replacing tokens.
 - Refresh: `useCalendarAccounts` loads accounts, refreshes tokens near/after expiry via `refreshAccountTokenIfNeeded`, persists updates to Firestore, and runs a 5-minute interval. Accounts missing a stored refresh token now fail with an explicit `MISSING_REFRESH_TOKEN` error so the UI can route the user into re-consent instead of silently retrying.
 - Token errors now keep Google’s `invalid_grant` details, and the UI surfaces the likely Google-side cause: revoked token or an OAuth consent screen that is still in Testing, where calendar refresh tokens expire after 7 days.
 - Logout: `auth.signOut()`, local user cleared; Firestore calendar docs remain for reuse. Firestore rules restrict access to the signed-in email.

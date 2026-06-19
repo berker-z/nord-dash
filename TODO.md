@@ -4,6 +4,7 @@
 
 - [ ] Verify deployed Vercel origin is listed in Google Cloud OAuth "Authorized JavaScript origins", Google Cloud OAuth "Authorized redirect URIs", and Firebase Auth authorized domains.
 - [ ] Verify the Google OAuth consent screen is set to `In production`; `Testing` mode causes calendar refresh tokens to expire after 7 days.
+- [ ] After this auth split deploys, re-auth the failing `berker.zor` and `multiplayer` calendar accounts once so Firestore stores fresh Calendar-only refresh tokens.
 - [ ] Calendar account modal: polish per-account calendar visibility controls (loading states / clearer role labels if needed).
 - [x] Surface re-auth CTA when token refresh fails (per-account).
 - [x] Show which calendar accounts failed to refresh so the user can re-auth them.
@@ -13,6 +14,9 @@
 
 ## Completed (current pass)
 
+- [x] Split dashboard identity login from Calendar offline authorization so normal sign-in no longer mints/replaces Calendar refresh tokens for the main account.
+- [x] Narrowed newly issued Calendar tokens to event access plus calendar-list read access, and enforced account-email matching during re-auth.
+- [x] Extended full-page Google OAuth redirect fallback to Calendar connect/re-auth so Helium can recover failed accounts without popup support.
 - [x] Added full-page Google OAuth redirect fallback for browsers such as Helium that reject GIS popup `window.open()` on the deployed Vercel domain while allowing localhost.
 - [x] Diagnosed fresh-browser/Vercel Google sign-in dead clicks and added inline handling for blocked GIS scripts, blocked/closed OAuth popups, and OAuth callback errors.
 - [x] Moved the Bible widget from OpenAI Chat Completions to the Responses API and upgraded it to `gpt-5.4-nano` with strict JSON schema output.

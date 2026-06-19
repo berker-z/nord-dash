@@ -8,7 +8,7 @@ import { BibleWidget } from "./components/BibleWidget";
 import { NotepadWidget } from "./components/NotepadWidget";
 import { fetchWeather } from "./services/weatherService";
 import {
-  completeIdentityRedirectLogin,
+  completeOAuthRedirect,
   handleIdentityLogin,
   getCalendarAuthErrorMessage,
   isGooglePopupOpenFailure,
@@ -175,7 +175,10 @@ const App: React.FC = () => {
       setIsLoginPending(true);
       setAuthError(null);
       try {
-        await completeIdentityRedirectLogin();
+        const redirectPurpose = await completeOAuthRedirect();
+        if (redirectPurpose === "calendar") {
+          await refreshCalendarAccounts();
+        }
       } catch (e) {
         console.error("Redirect Login Failed", e);
         if (isMounted) setAuthError(getCalendarAuthErrorMessage(e));
@@ -188,7 +191,7 @@ const App: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshCalendarAccounts]);
 
   // Handle Identity Login
   const handleLogin = async () => {
