@@ -2,6 +2,7 @@
 
 ## In Progress / Next
 
+- [ ] Verify deployed Vercel origin is listed in Google Cloud OAuth "Authorized JavaScript origins" and Firebase Auth authorized domains.
 - [ ] Verify the Google OAuth consent screen is set to `In production`; `Testing` mode causes calendar refresh tokens to expire after 7 days.
 - [ ] Calendar account modal: polish per-account calendar visibility controls (loading states / clearer role labels if needed).
 - [x] Surface re-auth CTA when token refresh fails (per-account).
@@ -12,6 +13,7 @@
 
 ## Completed (current pass)
 
+- [x] Diagnosed fresh-browser/Vercel Google sign-in dead clicks and added inline handling for blocked GIS scripts, blocked/closed OAuth popups, and OAuth callback errors.
 - [x] Moved the Bible widget from OpenAI Chat Completions to the Responses API and upgraded it to `gpt-5.4-nano` with strict JSON schema output.
 - [x] Stopped saving calendar accounts without a refresh token, preserved real Google OAuth error details (`invalid_grant`), and rolled back Firebase login if the primary calendar account cannot be persisted durably.
 - [x] Switched the Bible quote OpenAI model off `gpt-4o` and removed unsupported GPT-5 sampling params.

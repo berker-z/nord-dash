@@ -8,11 +8,12 @@
 
 - React 18 (Vite) + TypeScript; Tailwind Nord theme compiled via `index.css` (no CDN).
 - Three-column grid in `App.tsx`; shared chrome via `WidgetFrame`, `ModalFrame`, `Checkbox`.
-- Design tokens and typography live in `design.md` + Tailwind config.
+- Design tokens and typography live in `DESIGN.md` + Tailwind config.
 
 ## Auth & Security Flow
 
 - Login (`authService.handleIdentityLogin`): Google OAuth code client requests offline access with explicit consent, exchanges the code for access/refresh tokens, checks the whitelist, then signs into Firebase with the Google credential.
+- Google Identity Services failure modes are surfaced inline: script load timeout, popup blocked/closed, and OAuth callback errors now reject the login promise instead of leaving the sign-in button apparently inert.
 - Calendar auth persistence is now fail-closed: if Google returns no `refresh_token` and no previously stored refresh token exists, `saveCalendarAccount` throws `CALENDAR_REFRESH_TOKEN_MISSING` instead of saving an access-token-only account that would break on the next expiry.
 - Calendar accounts stored at `users/{ownerEmail}/calendarAccounts/{accountEmail}` with `accessToken`, `refreshToken`, `expiresAt`, `calendars[]`, profile info.
 - Refresh: `useCalendarAccounts` loads accounts, refreshes tokens near/after expiry via `refreshAccountTokenIfNeeded`, persists updates to Firestore, and runs a 5-minute interval. Accounts missing a stored refresh token now fail with an explicit `MISSING_REFRESH_TOKEN` error so the UI can route the user into re-consent instead of silently retrying.
@@ -45,5 +46,5 @@
 
 ## Maintenance
 
-- Keep docs (`PROJECT.MD`, `DESIGN.md`, `TODO.md`) in sync with code changes.
+- Keep docs (`PROJECT.md`, `DESIGN.md`, `TODO.md`) in sync with code changes.
 - Follow `AGENTS.md` principles: modularity, single sources of truth, and consistent shared primitives.

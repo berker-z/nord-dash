@@ -34,7 +34,8 @@ interface OAuthCodeClientConfig {
   scope: string;
   ux_mode: "popup";
   callback: (response: any) => Promise<void>;
-  hint?: string;
+  error_callback?: (error: { type?: string }) => void;
+  login_hint?: string;
   access_type: "offline";
   include_granted_scopes: boolean;
   prompt: "consent" | "select_account consent";
@@ -62,6 +63,24 @@ const buildOAuthError = (
     subtype: data?.error_subtype,
   });
   return error;
+};
+
+const buildGooglePopupError = (type?: string) => {
+  if (type === "popup_failed_to_open") {
+    return new Error(
+      "GOOGLE_POPUP_FAILED_TO_OPEN: Google sign-in popup was blocked. Allow popups for this site and try again.",
+    );
+  }
+
+  if (type === "popup_closed") {
+    return new Error(
+      "GOOGLE_POPUP_CLOSED: Google sign-in was closed before it completed.",
+    );
+  }
+
+  return new Error(
+    `GOOGLE_POPUP_ERROR: ${type || "Unknown Google sign-in popup error"}`,
+  );
 };
 
 const normalizeCalendars = (
@@ -130,6 +149,11 @@ export const handleIdentityLogin = async (): Promise<void> => {
       include_granted_scopes: true,
       prompt: "consent",
       callback: async (response: any) => {
+        if (response.error) {
+          reject(buildOAuthError(response, "Google authorization failed"));
+          return;
+        }
+
         if (response.code) {
           let signedIntoFirebase = false;
           try {
@@ -176,6 +200,9 @@ export const handleIdentityLogin = async (): Promise<void> => {
           reject("No code returned");
         }
       },
+      error_callback: (error) => {
+        reject(buildGooglePopupError(error?.type));
+      },
     };
     const client = window.google.accounts.oauth2.initCodeClient(clientConfig);
     client.requestCode();
@@ -194,11 +221,16 @@ export const connectCalendarAccount = async (
       client_id: GOOGLE_CLIENT_ID,
       scope: "openid email profile https://www.googleapis.com/auth/calendar",
       ux_mode: "popup",
-      hint: hintEmail,
+      login_hint: hintEmail,
       access_type: "offline",
       include_granted_scopes: true,
       prompt: "select_account consent",
       callback: async (response: any) => {
+        if (response.error) {
+          reject(buildOAuthError(response, "Google authorization failed"));
+          return;
+        }
+
         if (response.code) {
           try {
             const tokens = await exchangeCodeForToken(response.code);
@@ -219,6 +251,9 @@ export const connectCalendarAccount = async (
         } else {
           reject(new Error(response.error || "No code returned"));
         }
+      },
+      error_callback: (error) => {
+        reject(buildGooglePopupError(error?.type));
       },
     };
     const client = window.google.accounts.oauth2.initCodeClient(clientConfig);
@@ -445,6 +480,14 @@ export const getCalendarAuthErrorMessage = (error: unknown) => {
 
   if (message.includes("invalid_grant")) {
     return `${message}. Google rejected the stored refresh token. The common causes are token revocation or an OAuth consent screen that is still in Testing, where calendar refresh tokens expire after 7 days.`;
+  }
+
+  if (message.includes("GOOGLE_POPUP_FAILED_TO_OPEN")) {
+    return "GOOGLE_POPUP_FAILED_TO_OPEN: Google sign-in popup was blocked. Allow popups for this Vercel domain in the browser and try again.";
+  }
+
+  if (message.includes("GOOGLE_POPUP_CLOSED")) {
+    return "GOOGLE_POPUP_CLOSED: Google sign-in was closed before it completed.";
   }
 
   return message;

@@ -104,6 +104,7 @@ const App: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const [isLoginPending, setIsLoginPending] = useState(false);
   const [originUrl, setOriginUrl] = useState("");
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [firebaseAuthError, setFirebaseAuthError] = useState<string | null>(
@@ -144,13 +145,31 @@ const App: React.FC = () => {
       const interval = setInterval(() => {
         if (checkGoogle()) clearInterval(interval);
       }, 300);
-      return () => clearInterval(interval);
+      const timeout = setTimeout(() => {
+        if (!window.google?.accounts) {
+          setAuthError(
+            "GOOGLE_IDENTITY_SCRIPT_UNAVAILABLE: Google sign-in did not load. Allow accounts.google.com scripts/content for this site and refresh.",
+          );
+        }
+      }, 8000);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
     }
   }, []);
 
   // Handle Identity Login
   const handleLogin = async () => {
     setAuthError(null);
+    if (!isGoogleLoaded) {
+      setAuthError(
+        "GOOGLE_IDENTITY_SCRIPT_UNAVAILABLE: Google sign-in is still loading or blocked. Allow accounts.google.com scripts/content for this site and refresh.",
+      );
+      return;
+    }
+
+    setIsLoginPending(true);
     try {
       await handleIdentityLogin();
       // User state will be updated by onAuthStateChanged/localStorage logic if we wanted,
@@ -160,6 +179,8 @@ const App: React.FC = () => {
     } catch (e: any) {
       console.error("Login Failed", e);
       setAuthError(getCalendarAuthErrorMessage(e));
+    } finally {
+      setIsLoginPending(false);
     }
   };
 
@@ -412,11 +433,13 @@ const App: React.FC = () => {
                 {/* Custom Google Button */}
                 <button
                   onClick={handleLogin}
-                  disabled={!isGoogleLoaded}
+                  disabled={!isGoogleLoaded || isLoginPending}
                   className="w-full py-3 px-4 bg-nord-3 hover:bg-nord-9 hover:text-nord-1 text-nord-6 rounded-lg transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {!isGoogleLoaded ? (
                     <span className="animate-pulse">INITIALIZING...</span>
+                  ) : isLoginPending ? (
+                    <span className="animate-pulse">OPENING GOOGLE...</span>
                   ) : (
                     <>
                       <svg
