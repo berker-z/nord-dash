@@ -13,7 +13,7 @@
 ## Auth & Security Flow
 
 - Login (`authService.handleIdentityLogin`): Google OAuth code client requests offline access with explicit consent, exchanges the code for access/refresh tokens, checks the whitelist, then signs into Firebase with the Google credential.
-- Google Identity Services failure modes are surfaced inline: script load timeout, popup blocked/closed, and OAuth callback errors now reject the login promise instead of leaving the sign-in button apparently inert.
+- Google Identity Services failure modes are handled explicitly: script load timeout and OAuth callback errors surface inline; if a browser refuses the GIS popup open on the deployed origin, login falls back to a full-page Google OAuth redirect and completes the same Firebase/calendar persistence flow on return.
 - Calendar auth persistence is now fail-closed: if Google returns no `refresh_token` and no previously stored refresh token exists, `saveCalendarAccount` throws `CALENDAR_REFRESH_TOKEN_MISSING` instead of saving an access-token-only account that would break on the next expiry.
 - Calendar accounts stored at `users/{ownerEmail}/calendarAccounts/{accountEmail}` with `accessToken`, `refreshToken`, `expiresAt`, `calendars[]`, profile info.
 - Refresh: `useCalendarAccounts` loads accounts, refreshes tokens near/after expiry via `refreshAccountTokenIfNeeded`, persists updates to Firestore, and runs a 5-minute interval. Accounts missing a stored refresh token now fail with an explicit `MISSING_REFRESH_TOKEN` error so the UI can route the user into re-consent instead of silently retrying.

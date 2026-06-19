@@ -41,6 +41,10 @@ interface OAuthCodeClientConfig {
   prompt: "consent" | "select_account consent";
 }
 
+const GOOGLE_OAUTH_SCOPE =
+  "openid email profile https://www.googleapis.com/auth/calendar";
+const IDENTITY_REDIRECT_STATE_KEY = "nord_identity_oauth_state";
+
 // --- Helpers ---
 
 const getDocRef = (email: string) => doc(db, "users", email);
@@ -67,20 +71,50 @@ const buildOAuthError = (
 
 const buildGooglePopupError = (type?: string) => {
   if (type === "popup_failed_to_open") {
-    return new Error(
+    const error = new Error(
       "GOOGLE_POPUP_FAILED_TO_OPEN: Google sign-in popup was blocked. Allow popups for this site and try again.",
     );
+    Object.assign(error, { code: "GOOGLE_POPUP_FAILED_TO_OPEN" });
+    return error;
   }
 
   if (type === "popup_closed") {
-    return new Error(
+    const error = new Error(
       "GOOGLE_POPUP_CLOSED: Google sign-in was closed before it completed.",
     );
+    Object.assign(error, { code: "GOOGLE_POPUP_CLOSED" });
+    return error;
   }
 
-  return new Error(
+  const error = new Error(
     `GOOGLE_POPUP_ERROR: ${type || "Unknown Google sign-in popup error"}`,
   );
+  Object.assign(error, { code: "GOOGLE_POPUP_ERROR" });
+  return error;
+};
+
+export const isGooglePopupOpenFailure = (error: unknown) =>
+  error instanceof Error &&
+  (error.message.includes("GOOGLE_POPUP_FAILED_TO_OPEN") ||
+    (error as Error & { code?: string }).code ===
+      "GOOGLE_POPUP_FAILED_TO_OPEN");
+
+const getOAuthRedirectUri = () => window.location.origin;
+
+const createOAuthState = () => {
+  const bytes = new Uint32Array(4);
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(8, "0")).join(
+    "",
+  );
+};
+
+const cleanOAuthParamsFromUrl = () => {
+  const url = new URL(window.location.href);
+  ["code", "scope", "authuser", "prompt", "state", "error"].forEach((param) =>
+    url.searchParams.delete(param),
+  );
+  window.history.replaceState({}, document.title, url.toString());
 };
 
 const normalizeCalendars = (
@@ -143,7 +177,7 @@ export const handleIdentityLogin = async (): Promise<void> => {
 
     const clientConfig: OAuthCodeClientConfig = {
       client_id: GOOGLE_CLIENT_ID,
-      scope: "openid email profile https://www.googleapis.com/auth/calendar",
+      scope: GOOGLE_OAUTH_SCOPE,
       ux_mode: "popup",
       access_type: "offline",
       include_granted_scopes: true,
@@ -155,44 +189,10 @@ export const handleIdentityLogin = async (): Promise<void> => {
         }
 
         if (response.code) {
-          let signedIntoFirebase = false;
           try {
-            // 1. Exchange Code
-            const tokens = await exchangeCodeForToken(response.code);
-
-            // 2. Get Profile to verify whitelist
-            const profile = await fetchUserProfile(tokens.access_token);
-            if (!ALLOWED_EMAILS.includes(profile.email)) {
-              throw new Error(`UNAUTHORIZED_USER: ${profile.email}`);
-            }
-
-            // 3. Sign into Firebase using the access token
-            const credential = GoogleAuthProvider.credential(
-              null,
-              tokens.access_token,
-            );
-            await signInWithCredential(auth, credential);
-            signedIntoFirebase = true;
-
-            // 4. Persist Primary Account Tokens
-            // The primary account is also a "Calendar Account"
-            await saveCalendarAccount(
-              profile.email,
-              profile.email,
-              tokens,
-              profile,
-            );
-
+            await completeIdentityLoginWithCode(response.code);
             resolve();
           } catch (e) {
-            if (signedIntoFirebase) {
-              await auth.signOut().catch((signOutError) => {
-                console.error(
-                  "Failed to roll back Firebase auth after calendar auth error",
-                  signOutError,
-                );
-              });
-            }
             console.error("Identity Login Failed", e);
             reject(e);
           }
@@ -209,6 +209,52 @@ export const handleIdentityLogin = async (): Promise<void> => {
   });
 };
 
+export const startIdentityRedirectLogin = () => {
+  const state = createOAuthState();
+  sessionStorage.setItem(IDENTITY_REDIRECT_STATE_KEY, state);
+
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: getOAuthRedirectUri(),
+    response_type: "code",
+    scope: GOOGLE_OAUTH_SCOPE,
+    access_type: "offline",
+    include_granted_scopes: "true",
+    prompt: "consent",
+    state,
+  });
+
+  window.location.assign(
+    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+  );
+};
+
+export const completeIdentityRedirectLogin = async () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const error = params.get("error");
+
+  if (!code && !error) return false;
+
+  try {
+    if (error) {
+      throw new Error(`GOOGLE_REDIRECT_ERROR: ${error}`);
+    }
+
+    const returnedState = params.get("state");
+    const expectedState = sessionStorage.getItem(IDENTITY_REDIRECT_STATE_KEY);
+    if (!expectedState || returnedState !== expectedState) {
+      throw new Error("GOOGLE_REDIRECT_STATE_MISMATCH");
+    }
+
+    await completeIdentityLoginWithCode(code);
+    return true;
+  } finally {
+    sessionStorage.removeItem(IDENTITY_REDIRECT_STATE_KEY);
+    cleanOAuthParamsFromUrl();
+  }
+};
+
 export const connectCalendarAccount = async (
   currentUserEmail: string,
   hintEmail?: string,
@@ -219,7 +265,7 @@ export const connectCalendarAccount = async (
 
     const clientConfig: OAuthCodeClientConfig = {
       client_id: GOOGLE_CLIENT_ID,
-      scope: "openid email profile https://www.googleapis.com/auth/calendar",
+      scope: GOOGLE_OAUTH_SCOPE,
       ux_mode: "popup",
       login_hint: hintEmail,
       access_type: "offline",
@@ -274,7 +320,7 @@ const exchangeCodeForToken = async (code: string): Promise<TokenResponse> => {
     code: code,
     client_id: GOOGLE_CLIENT_ID,
     client_secret: GOOGLE_CLIENT_SECRET,
-    redirect_uri: window.location.origin,
+    redirect_uri: getOAuthRedirectUri(),
     grant_type: "authorization_code",
   });
 
@@ -313,6 +359,34 @@ const refreshOAuthToken = async (
 };
 
 // --- Data Persistence ---
+
+const completeIdentityLoginWithCode = async (code: string) => {
+  let signedIntoFirebase = false;
+  try {
+    const tokens = await exchangeCodeForToken(code);
+
+    const profile = await fetchUserProfile(tokens.access_token);
+    if (!ALLOWED_EMAILS.includes(profile.email)) {
+      throw new Error(`UNAUTHORIZED_USER: ${profile.email}`);
+    }
+
+    const credential = GoogleAuthProvider.credential(null, tokens.access_token);
+    await signInWithCredential(auth, credential);
+    signedIntoFirebase = true;
+
+    await saveCalendarAccount(profile.email, profile.email, tokens, profile);
+  } catch (e) {
+    if (signedIntoFirebase) {
+      await auth.signOut().catch((signOutError) => {
+        console.error(
+          "Failed to roll back Firebase auth after calendar auth error",
+          signOutError,
+        );
+      });
+    }
+    throw e;
+  }
+};
 
 const saveCalendarAccount = async (
   ownerEmail: string,

@@ -8,8 +8,11 @@ import { BibleWidget } from "./components/BibleWidget";
 import { NotepadWidget } from "./components/NotepadWidget";
 import { fetchWeather } from "./services/weatherService";
 import {
+  completeIdentityRedirectLogin,
   handleIdentityLogin,
   getCalendarAuthErrorMessage,
+  isGooglePopupOpenFailure,
+  startIdentityRedirectLogin,
 } from "./services/authService";
 import { GOOGLE_CLIENT_ID, ALLOWED_EMAILS } from "./config";
 import {
@@ -159,6 +162,34 @@ const App: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const completeRedirectLogin = async () => {
+      if (
+        !window.location.search.includes("code=") &&
+        !window.location.search.includes("error=")
+      ) {
+        return;
+      }
+
+      setIsLoginPending(true);
+      setAuthError(null);
+      try {
+        await completeIdentityRedirectLogin();
+      } catch (e) {
+        console.error("Redirect Login Failed", e);
+        if (isMounted) setAuthError(getCalendarAuthErrorMessage(e));
+      } finally {
+        if (isMounted) setIsLoginPending(false);
+      }
+    };
+
+    void completeRedirectLogin();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Handle Identity Login
   const handleLogin = async () => {
     setAuthError(null);
@@ -178,6 +209,10 @@ const App: React.FC = () => {
       // We should listen to onAuthStateChanged.
     } catch (e: any) {
       console.error("Login Failed", e);
+      if (isGooglePopupOpenFailure(e)) {
+        startIdentityRedirectLogin();
+        return;
+      }
       setAuthError(getCalendarAuthErrorMessage(e));
     } finally {
       setIsLoginPending(false);
@@ -462,7 +497,8 @@ const App: React.FC = () => {
                 <Terminal size={14} /> Dev_Mode: OAuth Config
               </div>
               <p className="text-nord-4 mb-2">
-                Add this URL to "Authorized JavaScript origins" in Google Cloud:
+                Add this URL to Google Cloud OAuth JavaScript origins and
+                redirect URIs:
               </p>
               <div className="bg-nord-0 p-2 border border-nord-2 rounded flex items-center justify-between gap-2">
                 <code className="text-nord-13 truncate">{originUrl}</code>
