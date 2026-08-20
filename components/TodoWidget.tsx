@@ -16,6 +16,7 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [syncError, setSyncError] = useState<string | null>(null);
   // Track if we've loaded initial data from Firestore to prevent saving during mount/logout
   const hasLoadedFromFirestore = useRef(false);
 
@@ -29,18 +30,26 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
     }
 
     setLoading(true);
+    setSyncError(null);
     hasLoadedFromFirestore.current = false; // Reset when user changes
     const unsubscribe = subscribeTodos(
       userEmail,
       (firestoreTodos) => {
         setTodos(firestoreTodos);
         setLoading(false);
+        setSyncError(null);
         hasLoadedFromFirestore.current = true; // Mark as loaded
       },
       (error) => {
         console.error("Todo subscription failed:", error);
         setLoading(false);
-        // We could set an error state here to show in UI
+        // Keep whatever we already have on screen — don't render an empty
+        // list that looks like the todos were deleted.
+        setSyncError(
+          error?.code === "permission-denied"
+            ? "PERMISSION_DENIED: your session expired — log out and back in."
+            : String(error?.message || error),
+        );
       }
     );
 
@@ -118,6 +127,11 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
 
   return (
     <div className="flex flex-col font-mono">
+      {syncError && (
+        <div className="mb-3 p-2 text-xs text-nord-11 border border-nord-11 bg-nord-11/10 rounded">
+          ! TODO_SYNC_FAILED: {syncError}
+        </div>
+      )}
       <ul className="space-y-3 flex-1 overflow-y-auto pr-2 mb-4">
         {todos.map((todo) => (
           <li

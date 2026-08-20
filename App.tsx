@@ -222,7 +222,11 @@ const App: React.FC = () => {
     }
   };
 
-  // Auth State Listener
+  // Auth State Listener — Firebase is the source of truth.
+  // The localStorage copy of the user is only an optimistic pre-paint hint;
+  // if Firebase says the session is gone, every Firestore read would be
+  // permission-denied anyway (empty calendar, "missing" todos), so force the
+  // login screen instead of a silently broken dashboard.
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
@@ -239,11 +243,7 @@ const App: React.FC = () => {
           auth.signOut();
         }
       } else {
-        // Keep local user if we want manual logout, or clear it.
-        // For now, let's trust Firebase status.
-        // setUser(null);
-        // Wait, existing logic uses localStorage for user.
-        // Let's stick to existing pattern for now but update it when firebase updates.
+        setUser(null);
       }
     });
     return () => unsubscribe();

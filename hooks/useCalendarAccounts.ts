@@ -45,20 +45,38 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
       const accs = await getConnectedAccounts(userEmail);
       const refreshedAccounts = await Promise.all(
         accs.map(async (account) => {
+          let updatedAccount = account;
           try {
             const { accessToken, expiresAt } =
               await refreshAccountTokenIfNeeded(account, userEmail);
-            const updatedAccount = { ...account, accessToken, expiresAt };
+            updatedAccount = { ...account, accessToken, expiresAt };
+          } catch (err) {
+            console.error("Failed to refresh token for", account.email, err);
+            hadRefreshFailure = true;
+            failedEmails.push(account.email);
+            return account;
+          }
+
+          try {
             const calendars = await syncAccountCalendars(
               updatedAccount,
               userEmail,
             );
             return { ...updatedAccount, calendars };
           } catch (err) {
-            console.error("Failed to refresh token for", account.email, err);
-            hadRefreshFailure = true;
-            failedEmails.push(account.email);
-            return account;
+            // A failed calendar-list sync shouldn't nuke the account or its
+            // stored calendars — keep what we have. Only an auth error means
+            // the account genuinely needs re-auth.
+            console.error(
+              "Failed to sync calendars for",
+              account.email,
+              err,
+            );
+            if (err instanceof Error && err.message === "UNAUTHORIZED") {
+              hadRefreshFailure = true;
+              failedEmails.push(account.email);
+            }
+            return updatedAccount;
           }
         }),
       );

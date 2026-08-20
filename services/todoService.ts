@@ -28,8 +28,9 @@ export const subscribeTodos = (
         const data = docSnap.data();
         onData(data.todos || []);
       } else {
-        // Initialize empty todos for new user
-        setDoc(userDocRef, { todos: [] });
+        // Doc doesn't exist yet (new user) or this is an empty cache read.
+        // Never write here — a non-merge write from a stale/offline snapshot
+        // can wipe real data. addTodo creates the doc on first use.
         onData([]);
       }
     },
@@ -63,7 +64,7 @@ export const addTodo = async (userEmail: string, todo: TodoItem) => {
         todos: [...currentTodos, todo],
       });
     } else {
-      transaction.set(userDocRef, { todos: [todo] });
+      transaction.set(userDocRef, { todos: [todo] }, { merge: true });
     }
   });
 };

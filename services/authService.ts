@@ -18,6 +18,7 @@ import { listCalendars } from "./calendarService";
 interface TokenResponse {
   access_token: string;
   refresh_token?: string;
+  id_token?: string;
   expires_in: number;
   scope: string;
   token_type: string;
@@ -392,12 +393,22 @@ export const connectCalendarAccount = async (
 
 // --- Token Management ---
 
+const requireClientSecret = (secret: string) => {
+  if (!secret) {
+    throw createError(
+      "GOOGLE_CLIENT_SECRET_MISSING: VITE_GOOGLE_CLIENT_SECRET is not set in this deployment, so token exchange/refresh cannot work.",
+      "GOOGLE_CLIENT_SECRET_MISSING",
+    );
+  }
+};
+
 const exchangeCodeForToken = async (code: string): Promise<TokenResponse> => {
   // NOTE: This usually requires a backend because of CLIENT_SECRET.
   // Since this is a "local" personal dashboard, we are doing it client-side.
   // Ideally, use a Cloud Function or Proxy.
   // For now, importing secret from config (assuming it's available there as per previous files)
   const { GOOGLE_CLIENT_SECRET } = await import("../config");
+  requireClientSecret(GOOGLE_CLIENT_SECRET);
 
   const params = new URLSearchParams({
     code: code,
@@ -422,6 +433,7 @@ const refreshOAuthToken = async (
   refreshToken: string,
 ): Promise<TokenResponse> => {
   const { GOOGLE_CLIENT_SECRET } = await import("../config");
+  requireClientSecret(GOOGLE_CLIENT_SECRET);
 
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
@@ -453,7 +465,10 @@ const completeIdentityLoginWithCode = async (code: string) => {
       throw new Error(`UNAUTHORIZED_USER: ${profile.email}`);
     }
 
-    const credential = GoogleAuthProvider.credential(null, tokens.access_token);
+    const credential = GoogleAuthProvider.credential(
+      tokens.id_token || null,
+      tokens.access_token,
+    );
     await signInWithCredential(auth, credential);
     signedIntoFirebase = true;
   } catch (e) {
@@ -577,9 +592,21 @@ export const syncAccountCalendars = async (
   account: CalendarAccount,
   userEmail: string,
 ): Promise<CalendarConfig[]> => {
+  const existing = normalizeCalendars(account.calendars || [], account.email);
   const rawCalendars = await listCalendars(account.accessToken);
+
+  // Google always returns at least the primary calendar for a valid token.
+  // An empty response means something is wrong — keep the stored config
+  // instead of wiping it from Firestore.
+  if (rawCalendars.length === 0 && existing.length > 0) {
+    console.warn(
+      `Calendar list for ${account.email} came back empty; keeping stored calendars.`,
+    );
+    return existing;
+  }
+
   const mergedCalendars = mergeCalendarVisibility(
-    normalizeCalendars(account.calendars || [], account.email),
+    existing,
     mapGoogleCalendars(rawCalendars),
   );
 
@@ -625,10 +652,16 @@ export const refreshAccountTokenIfNeeded = async (
       const data = await refreshOAuthToken(account.refreshToken);
       const newExpiresAt = Date.now() + data.expires_in * 1000;
 
-      await updateAccountToken(userEmail, account.email, {
+      const tokenUpdate: Partial<CalendarAccount> = {
         accessToken: data.access_token,
         expiresAt: newExpiresAt,
-      });
+      };
+      // Google occasionally rotates refresh tokens; losing the new one
+      // means the old one eventually stops working.
+      if (data.refresh_token) {
+        tokenUpdate.refreshToken = data.refresh_token;
+      }
+      await updateAccountToken(userEmail, account.email, tokenUpdate);
       return {
         accessToken: data.access_token,
         expiresAt: newExpiresAt,

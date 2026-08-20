@@ -2,33 +2,33 @@ import { CalendarEvent } from "../types";
 
 // Google Calendar API client (no auth/secret handling)
 export const listCalendars = async (accessToken: string) => {
-  try {
-    const response = await fetch(
-      "https://www.googleapis.com/calendar/v3/users/me/calendarList",
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+  const response = await fetch(
+    "https://www.googleapis.com/calendar/v3/users/me/calendarList",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
+    },
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error(
+      "Failed to list calendars:",
+      response.status,
+      response.statusText,
+      errorBody,
     );
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(
-        "Failed to list calendars:",
-        response.status,
-        response.statusText,
-        errorBody,
-      );
-      return [];
+    if (response.status === 401) {
+      throw new Error("UNAUTHORIZED");
     }
-
-    const data = await response.json();
-    return data.items || [];
-  } catch (e) {
-    console.error("Error listing calendars", e);
-    return [];
+    throw new Error(
+      `CALENDAR_LIST_FAILED: ${response.status} ${response.statusText}`,
+    );
   }
+
+  const data = await response.json();
+  return data.items || [];
 };
 
 export const listEvents = async (
