@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { ModalFrame } from "../ui/ModalFrame";
+import { htmlToText } from "../../services/htmlText";
 
 interface Props {
   event: CalendarEvent;
@@ -38,43 +39,43 @@ export const EventDetailModal: React.FC<Props> = ({
           <h2 className="text-section truncate">
             {event.title}
           </h2>
-          <div className="flex items-center gap-3 text-nord-13 text-sm font-mono">
-            <Clock size={16} />
+          <div className="flex items-center gap-3 text-yellow text-sm font-mono">
+            <Clock size={15} />
             <span>
               {event.date.toLocaleDateString()} :: {event.time}
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-nord-3">
+        <div className="flex items-center gap-2 text-muted">
           <button
             onClick={onEdit}
-            className="p-2 rounded-lg hover:bg-nord-2 hover:text-nord-8 transition-colors"
+            className="p-2 hover:bg-raised hover:text-accent transition-colors"
             title="Edit"
           >
-            <Edit size={18} />
+            <Edit size={17} />
           </button>
           <button
             onClick={onDelete}
-            className="p-2 rounded-lg hover:bg-nord-2 hover:text-nord-11 transition-colors"
+            className="p-2 hover:bg-raised hover:text-red transition-colors"
             title="Delete"
           >
-            <Trash2 size={18} />
+            <Trash2 size={17} />
           </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-nord-2 hover:text-nord-13 transition-colors"
+            className="p-2 hover:bg-raised hover:text-yellow transition-colors"
             title="Close"
           >
-            <X size={18} />
+            <X size={17} />
           </button>
         </div>
       </div>
 
-      <div className="h-px bg-nord-2" />
+      <div className="h-px bg-divider" />
 
       {event.description && (
-        <div className="bg-nord-1 p-4 text-base text-nord-4 leading-relaxed font-mono border-l-4 border-nord-3 rounded-r-lg">
-          {event.description}
+        <div className="pl-4 border-l-2 border-faint text-ink leading-relaxed font-mono whitespace-pre-line">
+          {htmlToText(event.description)}
         </div>
       )}
 
@@ -83,12 +84,12 @@ export const EventDetailModal: React.FC<Props> = ({
           href={event.link}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 text-nord-8 hover:text-nord-7 text-base transition-colors border-2 border-nord-3 p-3 hover:bg-nord-1 hover:border-nord-8 group rounded-lg"
+          className="flex items-center gap-3 text-accent hover:text-teal transition-colors border border-faint p-3 hover:bg-raised hover:border-accent group"
         >
-          <Video size={20} />
+          <Video size={18} />
           <span className="truncate">{event.link}</span>
           <ExternalLink
-            size={16}
+            size={15}
             className="ml-auto opacity-50 group-hover:opacity-100"
           />
         </a>
@@ -96,14 +97,14 @@ export const EventDetailModal: React.FC<Props> = ({
 
       {event.attendees && event.attendees.length > 0 && (
         <div>
-          <div className="flex items-center gap-2 text-nord-3 text-xs uppercase tracking-wider mb-2">
+          <div className="flex items-center gap-2 text-muted text-xs uppercase tracking-wider mb-2">
             <Users size={14} /> Attendees
           </div>
           <div className="flex flex-wrap gap-2">
             {event.attendees.map((a, i) => (
               <div
                 key={i}
-                className="bg-nord-1 border border-nord-3 rounded-full px-3 py-1 text-xs text-nord-4 flex items-center gap-2"
+                className="bg-raised border border-faint px-2.5 py-1 text-xs text-ink flex items-center gap-2"
               >
                 {a.email}
               </div>

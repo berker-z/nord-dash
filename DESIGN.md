@@ -1,44 +1,120 @@
-# Design System — Nord Dash
+# Design System — "Splits"
+
+The dashboard is one continuous terminal surface divided into panes by 1px
+hairlines, after tmux. There are no cards: no radii, no shadows, no blur, no
+filled widget headers. Global state (clock, weather, session, theme, auth)
+lives in a statusline bar fixed to the top of the screen.
+
+## Tokens & Theming
+
+Every color routes through semantic role variables defined in `index.css` as
+raw RGB triplets (so Tailwind can apply alpha) and mapped to Tailwind color
+names in `tailwind.config.js`. **Never use hex values or theme-specific colors
+in components — only the role classes below.**
+
+| Role | Class examples | Use |
+| --- | --- | --- |
+| `surface` | `bg-surface` | pane background |
+| `raised` | `bg-raised` | inputs, hover rows, selected states |
+| `bar` | `bg-bar` | statusline, filled chrome |
+| `divider` | `gap-px` grid ground, `border-divider` | hairlines between/inside panes |
+| `ink` | `text-ink` | primary text |
+| `bright` | `text-bright` | emphasized text (titles, prices) |
+| `muted` | `text-muted` | secondary text, idle icons/labels |
+| `faint` | `border-faint`, `text-faint` | input borders, disabled, rule lines |
+| `accent` | `text-accent`, `border-accent` | focus, hover, active pane, links |
+| hues | `red orange yellow green magenta blue cyan teal` | data only: errors, gains/losses, account colors, save states |
+
+Themes are `[data-theme="<id>"]` blocks in `index.css` overriding the same
+variables. Registry + labels live in `themes.ts`; `hooks/useTheme.ts` applies
+`data-theme` on `<html>` and persists to localStorage (`wired_theme`). The
+switcher is in the statusline; each menu row carries its own `data-theme`
+attribute so its swatch/colors preview that theme for free.
+
+Shipped themes: `nord` (default), `tokyo-night`, `dracula`, `catppuccin`
+(mocha), `gruvbox`, `one-dark`, `solarized`.
+
+**To add a theme:** add one `[data-theme="x"]` block in `index.css` (all 17
+variables, RGB triplets) + one entry in `themes.ts`. No component changes.
 
 ## Visual Language
 
-- Palette: Nord blues/auroras defined in `tailwind.config.js` as `nord-0`…`nord-16`; CSS vars mirror key surfaces (`--surface-base`, `--surface-muted`, `--text-primary`, `--accent-ice`, `--accent-aurora`).
-- Typography: JetBrains Mono (300–700) loaded in `index.css`; base font size 17px (`html`), default weight 400. Titles use wider tracking (e.g., widget headers `tracking-[0.16em]`) with natural casing. No bold/semibold anywhere except the calendar day numbers in the month grid; keep everything else at the default weight.
-- Surfaces: Defaults live in `index.css` (`body` on `--surface-base` with `color-scheme: dark`). Use `bg-nord-0/90` + `border-nord-16` for panels, header bars match border color (`bg-nord-16`) with slim padding, and `backdrop-blur-md` for glass.
-- Radii: `rounded-frame` (18px) for widgets, `rounded-modal` (26px) for overlays. **No drop shadows**; depth comes from borders/contrast only.
-- Borders/Outlines: `border-2 border-nord-16` is the default rail; info tone uses `border-nord-9/50`, danger uses `border-nord-11/50`. Use `focus:ring-nord-9` for inputs. Event cards use a thin neutral border with a left accent bar for account color.
-- Checkboxes: use the shared `Checkbox` component (`components/ui/Checkbox.tsx`) which matches the todo-list aesthetic (unchecked: light square outline, checked: green check square). Apply it everywhere instead of native checkbox styling (e.g., Google Meet toggle).
+- Typography: JetBrains Mono, base 14px (`html`), weight 400 everywhere —
+  only calendar day numbers in the month grid use `font-medium`. Pane titles
+  are `text-lg` with `tracking-[0.14em]` — the largest type on the page;
+  labels are `text-label` / `text-meta`.
+- Semantics of the hues: green = done/positive, red = danger/negative,
+  yellow = dirty/attention, blue = info/widget titles, magenta/orange/teal =
+  account & event colors. `accent` is reserved for interactivity (focus,
+  hover, active, today) — don't use it as decoration.
+- Corners: **square everywhere**. `rounded-full` survives only on spinners
+  and event dots.
+- Depth: none. Separation comes from `divider` hairlines and `raised` fills.
+
+## Layout
+
+- `App.tsx` renders a `grid lg:grid-cols-3 gap-px` on a `bg-divider` page
+  ground; columns are `flex flex-col gap-px`; every pane is `bg-surface` so
+  the 1px gaps read as tmux splits. Each column ends with a `bg-surface`
+  filler div so it reads as one continuous surface.
+- The statusline (`components/ui/StatusLine.tsx`) is fixed to the top,
+  `h-11 bg-bar text-base`, `z-[55]` (above the login overlay z-50, below
+  modals z-[60]); `main` gets `pt-11` to clear it. Left: `[thewired]` + user.
+  Right: theme switcher (menu opens downward), weather, city, date, clock,
+  logout/locked.
 
 ## Primitives
 
-- `components/ui/WidgetFrame.tsx`
-  - Chrome for widgets: header slot (`title`, optional `subtitle/meta`, `icon`, `badge`), `controls` area, collapse toggle, `bodyStyle/bodyClassName` for sizing tweaks.
-  - Defaults: `bg-nord-0/90 border-2 border-nord-16 rounded-frame backdrop-blur-md`, header on `bg-nord-16` with slim padding, body `p-5 text-nord-4`, title tracking widened.
-  - Intended use: wrap every dashboard widget; keep per-widget padding/height adjustments inside `bodyStyle/bodyClassName` rather than redefining frames.
-- `components/ui/ModalFrame.tsx`
-  - Shared overlay/backdrop + ESC-to-close; `tone` (`default`, `info`, `danger`) controls border/header accent; `size` (`sm`, `md`, `lg`); `headerActions` slot and `footer` slot.
-  - Container: `rounded-modal border-2` with `bg-nord-0/95 backdrop-blur-md`; body scrollable with `max-h-[90vh]`.
-  - Intended use: all modals (confirmations, calendar dialogs) use this wrapper; supply `onClose` to enable overlay + ESC dismissal.
+- `components/ui/WidgetFrame.tsx` — the pane. Header is a rule line:
+  `── /title ────────` with the slash-title embedded (`text-blue`, accent on
+  pane hover, matching rule color shift). Controls (resize, collapse) sit at
+  the rule's right end and appear on hover (always visible on mobile).
+  Body is `p-4 text-ink`. `bodyStyle`/`bodyClassName` for sizing tweaks.
+- `components/ui/ModalFrame.tsx` — square floating pane, `bg-surface` with a
+  1px tone border (`default` faint / `info` blue / `danger` red), plain
+  backdrop `bg-black/70` (no blur), footer on `bg-bar/60`. ESC + overlay
+  click to close.
+- `components/ui/StatusLine.tsx` — statusline + theme menu (opens upward).
+- `components/ui/Checkbox.tsx` — shared checkbox (checked green, unchecked
+  muted, `focus-visible:ring-accent`).
 
 ## Usage Patterns
 
-- Tailwind is compiled only via the build pipeline (CDN removed). `index.tsx` imports `index.css` so Vite picks up Tailwind layers.
-- Keep base tokens in `index.css`; prefer Nord palette utilities or the CSS vars instead of ad-hoc hex values.
-- For widget chrome: `WidgetFrame` + Nord borders (no shadows); avoid recreating per-widget headers.
-- For dialogs: `ModalFrame` with `tone` set to the intent; place primary action in `footer`, keep body content lightweight and scroll-friendly.
-- Calendar error banner: show the error code in uppercase and, when token refresh fails, append a tiny secondary line listing the affected account emails.
-- Connected Accounts modal: no card backgrounds; accounts render as a flat list with thin separators (mirrors the todo list). Each account row can expand into a lightweight checklist of that account's calendars so visibility is controllable without disconnecting the whole account.
-- Re-auth pattern: when an account refresh fails, show a small `REAUTH` text button next to that account; keep it understated (bordered, monochrome) and aligned with the existing list actions.
-- Calendar auth feedback: failed connect/reauth attempts should report the actual OAuth cause (`CALENDAR_REFRESH_TOKEN_MISSING`, `invalid_grant`) instead of a generic success/failure toast so broken offline access is obvious immediately.
-- Login auth feedback: Google Identity Services load failures surface in the existing inline auth error banner. Keep the sign-in button disabled while GIS is unavailable or auth is pending, with concise uppercase status text; popup-open failures may redirect to full-page Google OAuth instead of showing a dead-end error. Calendar re-auth uses the same redirect fallback when popup auth is unavailable.
-- Calendar visibility pattern: show a compact `CALENDARS` expander per account, display `shown / total` as secondary metadata, and use the shared `Checkbox` for each sub-calendar. Keep role labels tiny and muted so the calendar name remains primary.
-- Auth recovery pattern: when a calendar account is missing a stored refresh token, treat it as a re-consent case rather than a transient retry; the same understated `REAUTH` affordance should recover both primary and linked accounts.
-- Typography utilities live in `index.css` (`@layer components`): `text-nav`, `text-section`, `text-card-title`, `text-body`, `text-body-sm`, `text-muted`, `text-muted-sm`, `text-label`, `text-meta`, `text-heading-quiet`. Use these instead of inline weights. **Only calendar day numbers in the month grid should be bold/medium; everything else stays at the default weight.**
-- Notepad pattern: multi-line text area on `bg-nord-1` with `border-2 border-nord-3`, `rounded-lg`, `px-4 py-3`, `leading-relaxed`, and `resize-none`; autosize via JS instead of CSS `resize`. Actions are icon-only in the header (new, load modal, save). Save icon color reflects state (`text-nord-13` dirty, `text-nord-14` saved, `text-nord-9` saving); no separate status pill.
-
-## Handy Tokens
-
-- Backgrounds: `bg-nord-0/90`, `bg-nord-16/30` (headers), `bg-nord-1/60` (cards), `bg-nord-0/60` (badges).
-- Text: `text-nord-4` primary, `text-nord-3` muted, `text-nord-11` danger, `text-nord-9` info/accent.
-- Chips/Badges: `rounded-full bg-nord-0/60 border border-nord-3 text-nord-13`.
-- Scrollbars: standardized in `index.css` to match Nord rails; no per-component overrides needed.
+- Inputs/textareas/selects: `bg-raised border border-faint px-3 py-2
+  focus:border-accent focus:outline-none text-ink placeholder-muted`. Never
+  `border-2`, never rounded.
+- Buttons: text-style (`text-muted hover:text-accent`, often bracketed like
+  `[ REFRESH ]`) or bordered (`bg-raised border border-faint hover:border-accent
+  hover:text-accent`). Filled buttons only for modal primary actions
+  (`bg-blue`/`bg-red` + `text-surface`).
+- List rows (todos, events, notes): flat, `border-b border-divider`,
+  `hover:bg-raised`, tight `py-2`. Row actions hidden until hover.
+- Error banners: `text-red border border-red/60 bg-red/10`, uppercase code
+  first (e.g. `! TODO_SYNC_FAILED: …`).
+- Agenda events: time (muted, tabular) · 2px account-color bar · title
+  (`components/calendar/EventItem.tsx`). Month grid: today is an inverse
+  accent block (`bg-accent text-divider`); event days get a 4px blue dot.
+- Calendar error banner: show the error code in uppercase and, when token
+  refresh fails, append a tiny secondary line listing the affected account
+  emails.
+- Connected Accounts modal: flat list with `divide-divider` separators; each
+  account row expands into a checklist of that account's calendars
+  (`shown / total` as secondary metadata, shared `Checkbox`, tiny muted role
+  labels).
+- Re-auth pattern: understated bordered `REAUTH` text button (`border-blue/60
+  text-blue`) next to the failing account; same affordance recovers primary
+  and linked accounts. Failed connect/reauth reports the actual OAuth cause
+  (`CALENDAR_REFRESH_TOKEN_MISSING`, `invalid_grant`), not a generic toast.
+- Login auth feedback: GIS load failures surface in the inline auth error
+  banner; sign-in button stays disabled while GIS is unavailable or auth is
+  pending, with concise uppercase status text; popup-open failures fall back
+  to full-page redirect OAuth.
+- Notepad: autosized textarea in the standard input style; icon-only header
+  actions; save icon color reflects state (`text-yellow` dirty, `text-green`
+  saved, `text-blue` saving).
+- Typography utilities in `index.css` (`@layer components`): `text-nav`,
+  `text-section`, `text-card-title`, `text-body`, `text-body-sm`,
+  `text-label`, `text-meta`, `text-heading-quiet`. Use these instead of
+  inline weights.
+- Scrollbars are standardized in `index.css` (surface track, faint thumb,
+  accent hover); no per-component overrides.

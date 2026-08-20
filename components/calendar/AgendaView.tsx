@@ -33,8 +33,8 @@ export const AgendaView: React.FC<Props> = ({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-4 pb-2 border-b-2 border-nord-1 flex justify-between items-center">
-        <span className="text-meta text-nord-8">
+      <div className="mb-3 pb-2 border-b border-divider flex justify-between items-center">
+        <span className="text-meta text-blue">
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
@@ -44,28 +44,28 @@ export const AgendaView: React.FC<Props> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onAddToday}
-            className="text-nord-3 hover:text-nord-14 transition-colors"
+            className="text-muted hover:text-green transition-colors"
             title="Add Event/Task"
           >
-            <Plus size={20} />
+            <Plus size={17} />
           </button>
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="text-nord-3 hover:text-nord-8 disabled:animate-spin"
+            className="text-muted hover:text-accent disabled:animate-spin"
           >
-            <Clock size={16} />
+            <Clock size={14} />
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-w-3xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto space-y-1 pr-2 max-w-3xl w-full mx-auto">
         {error && (
-          <div className="text-nord-11 border border-nord-11 bg-nord-11/10 p-2 rounded text-sm text-center mb-2">
+          <div className="text-red border border-red/60 bg-red/10 p-2 text-sm text-center mb-2">
             ! {error} !
           </div>
         )}
         {loading && todayEvents.length === 0 ? (
-          <div className="text-center text-nord-3 animate-pulse mt-10">
+          <div className="text-center text-muted animate-pulse mt-10">
             SYNCING_DATA...
           </div>
         ) : todayEvents.length > 0 ? (
@@ -73,7 +73,7 @@ export const AgendaView: React.FC<Props> = ({
             <EventItem key={evt.id} evt={evt} onClick={() => onSelectEvent(evt)} />
           ))
         ) : (
-          <div className="text-center text-nord-3 text-lg italic mt-10">
+          <div className="text-center text-muted italic mt-10">
             No events for today.
           </div>
         )}

@@ -189,14 +189,14 @@ export const NotepadWidget: React.FC<NotepadWidgetProps> = ({ userEmail }) => {
 
   const saveIconColor =
     saveState === "dirty"
-      ? "text-nord-13"
+      ? "text-yellow"
       : saveState === "saving"
-        ? "text-nord-9"
-        : "text-nord-14";
+        ? "text-blue"
+        : "text-green";
 
   if (!isAuthed) {
     return (
-      <div className="flex flex-col font-mono items-center justify-center h-48 text-nord-3 text-center">
+      <div className="flex flex-col font-mono items-center justify-center h-48 text-muted text-center">
         <p>Please log in to use the notepad.</p>
       </div>
     );
@@ -204,40 +204,40 @@ export const NotepadWidget: React.FC<NotepadWidgetProps> = ({ userEmail }) => {
 
   if (loading) {
     return (
-      <div className="flex flex-col font-mono items-center justify-center h-48 text-nord-3 text-center">
-        <div className="w-8 h-8 border-2 border-nord-8 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="flex flex-col font-mono items-center justify-center h-48 text-muted text-center">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-3" />
         <p>Loading notes…</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 font-mono text-nord-4">
+    <div className="flex flex-col gap-3 font-mono text-ink">
       <div className="flex items-center gap-3">
-        <div className="text-muted-sm uppercase tracking-[0.12em]">
+        <div className="text-muted text-xs uppercase tracking-[0.12em]">
           Notepad
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5">
           <button
             onClick={handleNew}
-            className="p-2 rounded-lg border-2 border-nord-3 bg-nord-1 hover:border-nord-9 hover:text-nord-9 transition-colors"
+            className="p-1.5 text-muted hover:text-accent transition-colors"
             title="New note"
           >
-            <FilePlus size={18} />
+            <FilePlus size={16} />
           </button>
           <button
             onClick={() => setPickerOpen(true)}
-            className="p-2 rounded-lg border-2 border-nord-3 bg-nord-1 hover:border-nord-9 hover:text-nord-9 transition-colors"
+            className="p-1.5 text-muted hover:text-accent transition-colors"
             title="Load note"
           >
-            <FolderOpen size={18} />
+            <FolderOpen size={16} />
           </button>
           <button
             onClick={handleSave}
-            className={`p-2 rounded-lg border-2 border-nord-3 bg-nord-1 hover:border-nord-9 transition-colors ${saveIconColor}`}
+            className={`p-1.5 hover:text-accent transition-colors ${saveIconColor}`}
             title="Save"
           >
-            <Save size={18} />
+            <Save size={16} />
           </button>
         </div>
       </div>
@@ -251,7 +251,7 @@ export const NotepadWidget: React.FC<NotepadWidgetProps> = ({ userEmail }) => {
         }}
         onInput={adjustHeight}
         placeholder="Write here..."
-        className="w-full bg-nord-1 border-2 border-nord-3 rounded-lg px-4 py-3 focus:outline-none focus:border-nord-9 text-nord-4 placeholder-nord-3 leading-relaxed resize-none"
+        className="w-full bg-raised border border-faint px-3 py-2.5 focus:outline-none focus:border-accent text-ink placeholder-muted leading-relaxed resize-none"
         style={{ minHeight: "10.5rem" }}
       />
 
@@ -261,9 +261,9 @@ export const NotepadWidget: React.FC<NotepadWidgetProps> = ({ userEmail }) => {
           onClose={() => setPickerOpen(false)}
           size="sm"
         >
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {notes.length === 0 && (
-              <div className="text-muted-sm text-center py-4">
+              <div className="text-muted text-xs text-center py-4">
                 No notes yet.
               </div>
             )}
@@ -271,8 +271,8 @@ export const NotepadWidget: React.FC<NotepadWidgetProps> = ({ userEmail }) => {
               <div
                 key={note.id}
                 className={`group flex items-center gap-3 px-3 py-2 border-b ${
-                  idx === notes.length - 1 ? "border-transparent" : "border-nord-1"
-                } ${note.id === activeId ? "bg-nord-1/60" : "hover:bg-nord-1"}`}
+                  idx === notes.length - 1 ? "border-transparent" : "border-divider"
+                } ${note.id === activeId ? "bg-raised" : "hover:bg-raised"}`}
               >
                 <button
                   onClick={() => handleSelect(note.id)}
@@ -280,7 +280,7 @@ export const NotepadWidget: React.FC<NotepadWidgetProps> = ({ userEmail }) => {
                 >
                   <div
                     className={`text-sm ${
-                      note.id === activeId ? "text-nord-9" : "text-nord-4"
+                      note.id === activeId ? "text-accent" : "text-ink"
                     }`}
                   >
                     {formatSnippet(note)}
@@ -288,10 +288,10 @@ export const NotepadWidget: React.FC<NotepadWidgetProps> = ({ userEmail }) => {
                 </button>
                 <button
                   onClick={() => handleDelete(note.id)}
-                  className="opacity-70 group-hover:opacity-100 text-nord-11 hover:bg-nord-2 p-2 rounded transition-all"
+                  className="opacity-70 group-hover:opacity-100 text-red hover:bg-surface p-1.5 transition-all"
                   title="Delete note"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={15} />
                 </button>
               </div>
             ))}

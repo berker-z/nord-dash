@@ -36,24 +36,24 @@ export const BibleWidget: React.FC = () => {
     <div className="flex flex-col font-mono">
       {!quote ? (
         <div className="flex-1 flex flex-col justify-center items-center text-center gap-4 p-4">
-          <div className="text-nord-3 text-6xl select-none">†</div>
-          <p className="text-nord-4 text-lg font-normal">
+          <div className="text-muted text-5xl select-none">†</div>
+          <p className="text-ink font-normal">
             How are you feeling today?
           </p>
         </div>
       ) : (
         <div className="flex-1 flex flex-col animate-fade-in overflow-y-auto">
-          <div className="bg-nord-1 p-6 rounded-lg border-l-4 border-nord-13 mb-4 relative">
-            <h3 className="text-card-title text-nord-8 mb-3 uppercase tracking-wider border-b border-nord-2 pb-1 inline-block">
+          <div className="pl-4 border-l-2 border-yellow mb-4 py-1">
+            <h3 className="text-card-title text-yellow mb-2 uppercase tracking-wider">
               {quote.reference}
             </h3>
-            <p className="text-nord-5 leading-relaxed whitespace-pre-line">
+            <p className="text-ink leading-relaxed whitespace-pre-line">
               "{quote.text}"
             </p>
           </div>
           <button
             onClick={() => setQuote(null)}
-            className="text-sm text-nord-3 hover:text-nord-8 self-center mt-2 uppercase tracking-widest border border-nord-3 px-2 py-1 hover:border-nord-8 transition-colors rounded"
+            className="text-xs text-muted hover:text-accent self-center mt-2 uppercase tracking-widest transition-colors"
           >
             [ RESET_QUERY ]
           </button>
@@ -66,19 +66,19 @@ export const BibleWidget: React.FC = () => {
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           placeholder="Query input..."
-          className="w-full bg-nord-1 border-2 border-nord-3 rounded-lg pl-4 pr-12 py-3 text-base focus:outline-none focus:border-nord-8 focus:bg-nord-2 placeholder-nord-3 min-h-[60px] max-h-[150px] resize-none text-nord-4 transition-colors overflow-hidden"
+          className="w-full bg-raised border border-faint pl-3 pr-12 py-2.5 focus:outline-none focus:border-accent placeholder-muted min-h-[52px] max-h-[150px] resize-none text-ink transition-colors overflow-hidden"
           disabled={loading}
           rows={1}
         />
         <button
           type="submit"
           disabled={loading || !feeling}
-          className="absolute right-3 bottom-3 text-nord-4 hover:text-nord-8 disabled:opacity-30 bg-nord-1 pl-2 pt-2 rounded-tl-lg"
+          className="absolute right-3 bottom-3 text-muted hover:text-accent disabled:opacity-30 bg-raised pl-2 pt-2"
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-nord-4 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-ink border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Send size={20} />
+            <Send size={17} />
           )}
         </button>
       </form>

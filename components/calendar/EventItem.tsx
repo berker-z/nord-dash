@@ -1,41 +1,43 @@
 import React from "react";
 import { CalendarEvent } from "../../types";
+import { htmlToText } from "../../services/htmlText";
 
 interface Props {
   evt: CalendarEvent;
   onClick: () => void;
 }
 
+// Flat agenda row: time · account-colored bar · title. No card chrome.
 export const EventItem: React.FC<Props> = ({ evt, onClick }) => {
-  const colorMap: Record<string, { border: string; accent: string }> = {
-    "2": { border: "border-nord-14", accent: "bg-nord-14" },
-    "9": { border: "border-nord-9", accent: "bg-nord-9" },
-    "11": { border: "border-nord-11", accent: "bg-nord-11" },
-    "12": { border: "border-nord-12", accent: "bg-nord-12" },
-    "13": { border: "border-nord-13", accent: "bg-nord-13" },
-    "14": { border: "border-nord-14", accent: "bg-nord-14" },
-    "15": { border: "border-nord-15", accent: "bg-nord-15" },
+  const colorMap: Record<string, string> = {
+    "2": "bg-green",
+    "9": "bg-blue",
+    "11": "bg-red",
+    "12": "bg-orange",
+    "13": "bg-yellow",
+    "14": "bg-green",
+    "15": "bg-magenta",
   };
 
-  const { accent } = colorMap[evt.colorId || "9"] || colorMap["9"];
+  const accent = colorMap[evt.colorId || "9"] || colorMap["9"];
 
   return (
     <div
       onClick={onClick}
-      className="bg-nord-1/90 p-4 rounded-lg border border-nord-2 cursor-pointer group shadow-none relative pl-4"
+      className="flex items-center gap-3 px-2 py-2 cursor-pointer hover:bg-raised transition-colors border-b border-divider group"
     >
-      <div className={`absolute inset-y-3 left-2 w-1 rounded-full ${accent} opacity-80`} />
-      <div className="flex justify-between items-center mb-1 pl-2">
-        <span className="text-card-title">{evt.title}</span>
-        <span className="text-base font-mono text-nord-6">
-          {evt.time}
-        </span>
-      </div>
-      {evt.description && (
-        <p className="text-sm text-nord-4 truncate opacity-70 pl-2">
-          {evt.description}
-        </p>
-      )}
+      <span className="text-muted text-xs flex-shrink-0 w-[5ch] tabular-nums">
+        {evt.time}
+      </span>
+      <span className={`w-0.5 self-stretch flex-shrink-0 ${accent}`} aria-hidden />
+      <span className="min-w-0 flex-1">
+        <span className="text-ink block truncate">{evt.title}</span>
+        {evt.description && (
+          <span className="text-xs text-muted block truncate">
+            {htmlToText(evt.description)}
+          </span>
+        )}
+      </span>
     </div>
   );
 };

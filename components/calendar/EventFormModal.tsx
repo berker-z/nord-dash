@@ -200,27 +200,27 @@ export const EventFormModal: React.FC<Props> = ({
       bodyClassName="space-y-4"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="text-nord-8">
+        <div className="text-blue">
           {initialEvent ? "Edit Event" : "New Event"}
         </div>
         <button
           onClick={onClose}
-          className="p-2 text-nord-3 hover:text-nord-11 hover:bg-nord-1 rounded transition-colors"
+          className="p-2 text-muted hover:text-red hover:bg-raised transition-colors"
           title="Close"
         >
           <X size={16} />
         </button>
       </div>
-      <div className="h-px bg-nord-2" />
+      <div className="h-px bg-divider" />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-nord-3 text-xs uppercase tracking-wider">
+          <label className="block text-muted text-xs uppercase tracking-wider">
             Properties
           </label>
 
           {initialEvent ? (
-            <div className="w-full bg-nord-0 border border-nord-3 rounded p-2 text-nord-4 text-sm opacity-80">
+            <div className="w-full bg-surface border border-faint p-2 text-ink text-sm opacity-80">
               Calendar:{" "}
               {selectedAccount?.calendars?.find(
                 (calendar) => calendar.id === selectedCalendarId,
@@ -233,7 +233,7 @@ export const EventFormModal: React.FC<Props> = ({
                 <select
                   value={selectedAccountEmail}
                   onChange={(e) => setSelectedAccountEmail(e.target.value)}
-                  className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 text-sm focus:border-nord-8 focus:outline-none mb-2"
+                  className="w-full bg-raised border border-faint p-2 text-ink text-sm focus:border-accent focus:outline-none mb-2"
                 >
                   {accounts.map((a) => (
                     <option key={a.email} value={a.email}>
@@ -246,7 +246,7 @@ export const EventFormModal: React.FC<Props> = ({
                 <select
                   value={selectedCalendarId}
                   onChange={(e) => setSelectedCalendarId(e.target.value)}
-                  className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 text-sm focus:border-nord-8 focus:outline-none"
+                  className="w-full bg-raised border border-faint p-2 text-ink text-sm focus:border-accent focus:outline-none"
                 >
                   {writableCalendars.map((calendar) => (
                     <option key={calendar.id} value={calendar.id}>
@@ -261,14 +261,14 @@ export const EventFormModal: React.FC<Props> = ({
         </div>
 
         <div>
-          <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
+          <label className="block text-muted text-xs uppercase tracking-wider mb-1">
             Title
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none"
+            className="w-full bg-raised border border-faint p-2 text-ink focus:border-accent focus:outline-none"
             placeholder="What's happening?"
             autoFocus
           />
@@ -276,24 +276,24 @@ export const EventFormModal: React.FC<Props> = ({
 
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
+            <label className="block text-muted text-xs uppercase tracking-wider mb-1">
               Time
             </label>
             <input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none"
+              className="w-full bg-raised border border-faint p-2 text-ink focus:border-accent focus:outline-none"
             />
           </div>
           <div className="flex-1">
-            <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
+            <label className="block text-muted text-xs uppercase tracking-wider mb-1">
               Duration
             </label>
             <select
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
-              className="w-full bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none"
+              className="w-full bg-raised border border-faint p-2 text-ink focus:border-accent focus:outline-none"
             >
               <option value={15}>15 mins</option>
               <option value={30}>30 mins</option>
@@ -310,13 +310,13 @@ export const EventFormModal: React.FC<Props> = ({
             onChange={setHasGoogleMeet}
             aria-label="Toggle Google Meet"
           />
-          <span className="text-nord-4 text-sm flex items-center gap-2">
+          <span className="text-ink text-sm flex items-center gap-2">
             <Video size={16} /> Add Google Meet Conference
           </span>
         </div>
 
         <div>
-          <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
+          <label className="block text-muted text-xs uppercase tracking-wider mb-1">
             Invite People
           </label>
           <div className="flex gap-2 mb-2">
@@ -331,12 +331,12 @@ export const EventFormModal: React.FC<Props> = ({
                 }
               }}
               placeholder="email@example.com"
-              className="flex-1 bg-nord-1 border border-nord-3 rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none text-sm"
+              className="flex-1 bg-raised border border-faint p-2 text-ink focus:border-accent focus:outline-none text-sm"
             />
             <button
               type="button"
               onClick={handleAddAttendee}
-              className="bg-nord-3 text-nord-6 px-3 rounded hover:bg-nord-2 transition-colors"
+              className="bg-raised border border-faint text-ink px-3 hover:border-accent hover:text-accent transition-colors"
             >
               <Plus size={16} />
             </button>
@@ -346,12 +346,12 @@ export const EventFormModal: React.FC<Props> = ({
               {attendees.map((email) => (
                 <div
                   key={email}
-                  className="bg-nord-1 border border-nord-3 rounded-full px-3 py-1 text-xs text-nord-4 flex items-center gap-2"
+                  className="bg-raised border border-faint px-2.5 py-1 text-xs text-ink flex items-center gap-2"
                 >
                   {email}
                   <button
                     onClick={() => removeAttendee(email)}
-                    className="hover:text-nord-11"
+                    className="hover:text-red"
                   >
                     <X size={12} />
                   </button>
@@ -362,13 +362,13 @@ export const EventFormModal: React.FC<Props> = ({
         </div>
 
         <div>
-          <label className="block text-nord-3 text-xs uppercase tracking-wider mb-1">
+          <label className="block text-muted text-xs uppercase tracking-wider mb-1">
             Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-nord-1 border-nord-3 border rounded p-2 text-nord-4 focus:border-nord-8 focus:outline-none h-24 resize-none"
+            className="w-full bg-raised border-faint border p-2 text-ink focus:border-accent focus:outline-none h-24 resize-none"
             placeholder="Details..."
           />
         </div>
@@ -377,14 +377,14 @@ export const EventFormModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-nord-4 hover:text-nord-6 transition-colors"
+            className="px-4 py-2 text-muted hover:text-ink transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting || !title}
-            className={`px-6 py-2 rounded text-nord-1 transition-colors bg-nord-9 hover:bg-nord-9/80 disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`px-6 py-2 text-surface transition-colors bg-blue hover:bg-blue/80 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isSubmitting ? "Saving..." : "Save"}
           </button>

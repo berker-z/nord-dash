@@ -23,15 +23,15 @@ export const Checkbox: React.FC<CheckboxProps> = ({
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`inline-flex items-center gap-2 text-nord-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-nord-9 rounded ${className}`}
+      className={`inline-flex items-center gap-2 text-muted transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-accent ${className}`}
       aria-label={ariaLabel}
     >
       {checked ? (
-        <CheckSquare size={size} className="text-nord-14" />
+        <CheckSquare size={size} className="text-green" />
       ) : (
-        <Square size={size} className="text-nord-3" />
+        <Square size={size} className="text-muted" />
       )}
-      {label && <span className="text-nord-4 text-sm">{label}</span>}
+      {label && <span className="text-ink text-sm">{label}</span>}
     </button>
   );
 };

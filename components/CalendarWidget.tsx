@@ -142,13 +142,13 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   if (accounts.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-4">
-        <div className="text-nord-3 opacity-50">
-          <CalendarIcon size={48} />
+        <div className="text-muted opacity-60">
+          <CalendarIcon size={40} />
         </div>
-        <div className="text-nord-4">SYNC_REQUIRED</div>
+        <div className="text-ink">SYNC_REQUIRED</div>
         <button
           onClick={onConnect}
-          className="bg-nord-3 hover:bg-nord-9 hover:text-nord-1 text-nord-6 px-4 py-2 rounded transition-colors uppercase tracking-wider text-sm"
+          className="bg-raised border border-faint hover:border-accent hover:text-accent text-ink px-4 py-2 transition-colors uppercase tracking-wider text-sm"
         >
           [ CONNECT_GOOGLE_CAL ]
         </button>
@@ -224,12 +224,12 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   return (
     <div className="flex flex-col relative font-mono">
       {accountError && (
-        <div className="mb-3 p-2 text-sm text-nord-11 border border-nord-11 bg-nord-11/10 rounded">
+        <div className="mb-3 p-2 text-sm text-red border border-red/60 bg-red/10">
           <div>{accountError}</div>
           {failedAccounts.length > 0 && (
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-nord-11/80">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-red/80">
               <span className="uppercase tracking-wide">Affected:</span>
-              <span className="text-nord-11/90">
+              <span className="text-red/90">
                 {failedAccounts.join(", ")}
               </span>
               {onReauthAccount && (
@@ -239,7 +239,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
                       () => undefined,
                     );
                   }}
-                  className="ml-auto text-[11px] px-2 py-1 border border-nord-11/60 rounded hover:bg-nord-11/10 transition-colors"
+                  className="ml-auto text-[11px] px-2 py-1 border border-red/60 hover:bg-red/10 transition-colors"
                 >
                   Re-auth first
                 </button>

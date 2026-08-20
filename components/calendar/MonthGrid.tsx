@@ -38,12 +38,7 @@ export const MonthGrid: React.FC<Props> = ({
   const renderCalendarGrid = () => {
     const days = [];
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(
-        <div
-          key={`empty-${i}`}
-          className="min-h-[30px] bg-nord-0/30 rounded-md"
-        ></div>
-      );
+      days.push(<div key={`empty-${i}`} className="min-h-[30px]"></div>);
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -60,18 +55,18 @@ export const MonthGrid: React.FC<Props> = ({
           key={d}
           onClick={() => onDayClick(d)}
           className={`
-                min-h-[30px] py-1 flex flex-col items-center justify-center cursor-pointer transition-all relative rounded-md
+                min-h-[30px] py-1 flex flex-col items-center justify-center cursor-pointer transition-colors relative
                 ${
                   isToday
-                    ? "bg-nord-3 text-nord-6 font-medium ring-2 ring-nord-8"
-                    : "hover:bg-nord-1 text-nord-4"
+                    ? "bg-accent text-divider font-medium"
+                    : "hover:bg-raised text-ink"
                 }
-                ${hasEvents ? "text-nord-8" : ""}
+                ${hasEvents && !isToday ? "text-accent" : ""}
             `}
         >
-          <span className="font-medium mb-3">{d}</span>
-          {hasEvents && (
-            <div className="w-1.5 h-1.5 rounded-full bg-nord-13 absolute bottom-1"></div>
+          <span className="font-medium mb-2">{d}</span>
+          {hasEvents && !isToday && (
+            <div className="w-1 h-1 rounded-full bg-blue absolute bottom-1"></div>
           )}
         </div>
       );
@@ -81,14 +76,14 @@ export const MonthGrid: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex justify-between items-center mb-3 pb-2 border-b border-nord-1">
+      <div className="flex justify-between items-center mb-3 pb-2 border-b border-divider">
         <button
           onClick={onPrevMonth}
-          className="p-2 hover:bg-nord-1 rounded hover:text-nord-8"
+          className="p-1.5 text-muted hover:text-accent transition-colors"
         >
-          <ChevronLeft size={24} />
+          <ChevronLeft size={18} />
         </button>
-        <span className="font-normal text-lg text-nord-4 tracking-[0.22em] uppercase">
+        <span className="font-normal text-ink tracking-[0.22em] uppercase">
           {currentDate.toLocaleDateString("en-US", {
             month: "long",
             year: "numeric",
@@ -97,31 +92,31 @@ export const MonthGrid: React.FC<Props> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={onNextMonth}
-            className="p-2 hover:bg-nord-1 rounded hover:text-nord-8"
+            className="p-1.5 text-muted hover:text-accent transition-colors"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={18} />
           </button>
           {onOpenAccounts && (
             <button
               onClick={onOpenAccounts}
-              className="p-2 hover:bg-nord-1 rounded hover:text-nord-8"
+              className="p-1.5 text-muted hover:text-accent transition-colors"
               title="Connected Accounts"
             >
-              <Settings size={20} />
+              <Settings size={16} />
             </button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-7 mb-2 text-center">
+      <div className="grid grid-cols-7 mb-1 text-center">
         {["MO", "TU", "WE", "TH", "FR", "SA", "SU"].map((d, i) => (
-          <span key={i} className="text-sm text-nord-3 uppercase">
+          <span key={i} className="text-[10px] text-muted uppercase tracking-[0.08em]">
             {d}
           </span>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-2.5">{renderCalendarGrid()}</div>
+      <div className="grid grid-cols-7 gap-1">{renderCalendarGrid()}</div>
 
       {selectedDayEvents && (
         <ModalFrame
@@ -134,27 +129,27 @@ export const MonthGrid: React.FC<Props> = ({
           bodyClassName="space-y-3"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="text-nord-8">
+            <div className="text-blue">
               Events [{selectedDayEvents[0].date.toLocaleDateString()}]
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onAddFromDay(selectedDayEvents[0].date)}
-                className="p-2 text-nord-3 hover:text-nord-14 hover:bg-nord-1 rounded transition-colors"
+                className="p-2 text-muted hover:text-green hover:bg-raised transition-colors"
                 title="Add event"
               >
                 <Plus size={18} />
               </button>
               <button
                 onClick={onCloseDayModal}
-                className="p-2 text-nord-3 hover:text-nord-11 hover:bg-nord-1 rounded transition-colors"
+                className="p-2 text-muted hover:text-red hover:bg-raised transition-colors"
                 title="Close"
               >
                 <X size={18} />
               </button>
             </div>
           </div>
-          <div className="h-px bg-nord-2" />
+          <div className="h-px bg-divider" />
           {selectedDayEvents.map((evt) => (
             <EventItem
               key={evt.id}

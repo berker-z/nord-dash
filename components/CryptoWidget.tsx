@@ -120,12 +120,12 @@ export const CryptoWidget: React.FC = () => {
 
   return (
     <div className="flex flex-col font-mono">
-      <div className="flex justify-between items-end mb-6 text-sm text-nord-3 border-b-2 border-nord-1 pb-2">
-        <span className="text-muted-sm">LAST_SYNC: {lastUpdated.toLocaleTimeString()}</span>
+      <div className="flex justify-between items-end mb-4 text-muted border-b border-divider pb-2">
+        <span className="text-xs">LAST_SYNC: {lastUpdated.toLocaleTimeString()}</span>
         <button
           onClick={handleManualRefresh}
           disabled={loading}
-          className="flex items-center gap-1 hover:text-nord-8 transition-colors disabled:opacity-50 uppercase text-muted"
+          className="flex items-center gap-1 hover:text-accent transition-colors disabled:opacity-50 uppercase text-xs"
         >
           [{loading ? "SYNCING..." : "REFRESH"}]
         </button>
@@ -137,30 +137,30 @@ export const CryptoWidget: React.FC = () => {
           return (
             <div
               key={`${item.symbol}-${idx}`}
-              className="flex items-center justify-between border-b border-nord-1 pb-2 mb-2 hover:bg-nord-1/50 px-2 transition-colors"
+              className="flex items-center justify-between border-b border-divider pb-2 mb-2 hover:bg-raised px-2 transition-colors"
             >
               <div className="flex items-center gap-4">
                 <div>
-                  <div className="leading-none text-card-title tracking-wider">
+                  <div className="leading-none text-bright tracking-wider">
                     {item.symbol}
                   </div>
                   {/* Show /USDT only for Binance coins for consistency, or just hide it for others */}
                   {BINANCE_COINS.includes(item.symbol) && (
-                    <div className="text-muted-sm mt-1">
+                    <div className="text-muted text-xs mt-1">
                       /USDT
                     </div>
                   )}
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-card-title text-nord-6">
+              <div className="text-right tabular-nums">
+                <div className="text-bright">
                   {BINANCE_COINS.includes(item.symbol)
                     ? `$${item.price}`
                     : item.price}
                 </div>
                 <div
                   className={`flex items-center justify-end gap-2 ${
-                    isPositive ? "text-nord-14" : "text-nord-11"
+                    isPositive ? "text-green" : "text-red"
                   }`}
                 >
                   <span>
@@ -174,7 +174,7 @@ export const CryptoWidget: React.FC = () => {
           );
         })}
         {allData.length === 0 && !loading && (
-          <div className="text-nord-11 text-lg text-center mt-10">
+          <div className="text-red text-center mt-10">
             ! CONNECTION_ERROR !
           </div>
         )}

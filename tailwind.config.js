@@ -1,4 +1,9 @@
 /** @type {import('tailwindcss').Config} */
+
+// All colors are semantic roles backed by CSS variables (see index.css).
+// Themes swap the variables under [data-theme="..."]; class names never change.
+const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
 export default {
   content: [
     "./index.html",
@@ -6,6 +11,7 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
     "./services/**/*.{js,ts,jsx,tsx}",
+    "./hooks/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: "class",
   theme: {
@@ -13,30 +19,27 @@ export default {
       fontFamily: {
         mono: ['"JetBrains Mono"', "monospace"],
       },
-      borderRadius: {
-        frame: "18px",
-        modal: "26px",
-      },
       colors: {
-        nord: {
-          0: "#2E3440", // Polar Night (Darkest)
-          1: "#3B4252",
-          2: "#434C5E",
-          3: "#4C566A", // Polar Night (Lightest)
-          4: "#D8DEE9", // Snow Storm (Darkest)
-          5: "#E5E9F0",
-          6: "#ECEFF4", // Snow Storm (Lightest)
-          7: "#8FBCBB", // Frost (Teal)
-          8: "#88C0D0", // Frost (Cyan)
-          9: "#81A1C1", // Frost (Blue)
-          10: "#5E81AC", // Frost (Dark Blue)
-          11: "#BF616A", // Aurora (Red)
-          12: "#D08770", // Aurora (Orange)
-          13: "#EBCB8B", // Aurora (Yellow)
-          14: "#A3BE8C", // Aurora (Green)
-          15: "#B48EAD", // Aurora (Purple)
-          16: "#1E2A3A", // Custom Dark Indigo (for accents)
-        },
+        // Surfaces
+        surface: token("surface"),
+        raised: token("raised"),
+        bar: token("bar"),
+        divider: token("divider"),
+        // Text
+        ink: token("ink"),
+        bright: token("bright"),
+        muted: token("muted"),
+        faint: token("faint"),
+        // Accent + hues
+        accent: token("accent"),
+        red: token("red"),
+        orange: token("orange"),
+        yellow: token("yellow"),
+        green: token("green"),
+        magenta: token("magenta"),
+        blue: token("blue"),
+        cyan: token("cyan"),
+        teal: token("teal"),
       },
     },
   },

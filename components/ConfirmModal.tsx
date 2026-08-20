@@ -38,16 +38,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <>
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-nord-4 hover:text-nord-6 transition-colors font-mono text-sm uppercase tracking-wider"
+            className="px-4 py-2 text-muted hover:text-ink transition-colors font-mono text-sm uppercase tracking-wider"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className={`px-6 py-2 rounded text-nord-1 transition-colors font-mono text-sm uppercase tracking-wider ${
+            className={`px-6 py-2 text-surface transition-colors font-mono text-sm uppercase tracking-wider ${
               isDestructive
-                ? "bg-nord-11 hover:bg-nord-11/80"
-                : "bg-nord-9 hover:bg-nord-9/80"
+                ? "bg-red hover:bg-red/80"
+                : "bg-blue hover:bg-blue/80"
             }`}
           >
             {confirmText}
@@ -55,7 +55,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </>
       }
     >
-      <p className="font-mono text-nord-4">{message}</p>
+      <p className="font-mono text-ink">{message}</p>
     </ModalFrame>
   );
 };

@@ -110,7 +110,7 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
 
   if (!userEmail) {
     return (
-      <div className="flex flex-col font-mono items-center justify-center h-64 text-nord-3">
+      <div className="flex flex-col font-mono items-center justify-center h-64 text-muted">
         <p className="text-center">Please log in to access your tasks.</p>
       </div>
     );
@@ -119,8 +119,8 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
   if (loading) {
     return (
       <div className="flex flex-col font-mono items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-nord-8 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-nord-3 mt-4">Loading tasks...</p>
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-muted mt-4">Loading tasks...</p>
       </div>
     );
   }
@@ -128,32 +128,32 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
   return (
     <div className="flex flex-col font-mono">
       {syncError && (
-        <div className="mb-3 p-2 text-xs text-nord-11 border border-nord-11 bg-nord-11/10 rounded">
+        <div className="mb-3 p-2 text-xs text-red border border-red/60 bg-red/10">
           ! TODO_SYNC_FAILED: {syncError}
         </div>
       )}
-      <ul className="space-y-3 flex-1 overflow-y-auto pr-2 mb-4">
+      <ul className="space-y-1 flex-1 overflow-y-auto pr-2 mb-4">
         {todos.map((todo) => (
           <li
             key={todo.id}
-            className="flex items-center justify-between group p-3 hover:bg-nord-1 transition-colors border-b border-nord-1 hover:border-nord-2 rounded-lg"
+            className="flex items-center justify-between group px-2 py-2 hover:bg-raised transition-colors border-b border-divider"
           >
             <div
-              className="flex items-center gap-4 cursor-pointer flex-1"
+              className="flex items-center gap-3 cursor-pointer flex-1"
               onClick={() => toggleTodo(todo.id)}
             >
-              <span className={todo.completed ? "text-nord-14" : "text-nord-3"}>
+              <span className={todo.completed ? "text-green" : "text-muted"}>
                 {todo.completed ? (
-                  <CheckSquare size={24} />
+                  <CheckSquare size={18} />
                 ) : (
-                  <Square size={24} />
+                  <Square size={18} />
                 )}
               </span>
               <span
                 className={`${
                   todo.completed
-                    ? "text-nord-3 line-through"
-                    : "text-nord-5 font-normal"
+                    ? "text-muted line-through"
+                    : "text-ink font-normal"
                 }`}
               >
                 {todo.text}
@@ -161,14 +161,14 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
             </div>
             <button
               onClick={() => deleteTodo(todo.id)}
-              className="opacity-0 group-hover:opacity-100 text-nord-11 hover:bg-nord-2 p-2 rounded transition-all"
+              className="opacity-0 group-hover:opacity-100 text-red hover:bg-surface p-1.5 transition-all"
             >
-              <Trash2 size={18} />
+              <Trash2 size={15} />
             </button>
           </li>
         ))}
         {todos.length === 0 && (
-          <li className="text-nord-3 italic text-center mt-10">
+          <li className="text-muted italic text-center mt-10">
             {">"} NO_ACTIVE_TASKS
           </li>
         )}
@@ -176,14 +176,14 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
 
       <form
         onSubmit={handleAdd}
-        className="pt-4 border-t-2 border-nord-1 mt-auto"
+        className="pt-3 border-t border-divider mt-auto"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="New task..."
-          className="w-full bg-nord-1 border-2 border-nord-3 rounded-lg px-4 py-3 focus:outline-none focus:border-nord-9 text-nord-4 placeholder-nord-3"
+          className="w-full bg-raised border border-faint px-3 py-2 focus:outline-none focus:border-accent text-ink placeholder-muted"
         />
       </form>
     </div>

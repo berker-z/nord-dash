@@ -21,27 +21,20 @@ interface ModalFrameProps {
   hideHeader?: boolean;
 }
 
-const toneStyles: Record<
-  ModalTone,
-  { border: string; header: string; accent: string; icon: string }
-> = {
+// Splits modal: a square floating pane. 1px border carries the tone;
+// no radius, no blur, no filled header.
+const toneStyles: Record<ModalTone, { border: string; accent: string }> = {
   default: {
-    border: "border-nord-16",
-    header: "bg-nord-16/30",
-    accent: "text-nord-4",
-    icon: "bg-nord-16/60 text-nord-4",
+    border: "border-faint",
+    accent: "text-ink",
   },
   info: {
-    border: "border-nord-9/50",
-    header: "bg-nord-9/15",
-    accent: "text-nord-9",
-    icon: "bg-nord-9/20 text-nord-9",
+    border: "border-blue/60",
+    accent: "text-blue",
   },
   danger: {
-    border: "border-nord-11/50",
-    header: "bg-nord-11/15",
-    accent: "text-nord-11",
-    icon: "bg-nord-11/15 text-nord-11",
+    border: "border-red/60",
+    accent: "text-red",
   },
 };
 
@@ -68,11 +61,11 @@ export const ModalFrame: React.FC<ModalFrameProps> = ({
 }) => {
   const toneClass = toneStyles[tone];
   const containerClasses = className
-    ? `relative bg-nord-0/90 border-2 rounded-modal backdrop-blur-md flex flex-col overflow-hidden ${toneClass.border} ${className}`
-    : `relative bg-nord-0/90 border-2 rounded-modal backdrop-blur-md flex flex-col overflow-hidden ${toneClass.border}`;
+    ? `relative bg-surface border flex flex-col overflow-hidden ${toneClass.border} ${className}`
+    : `relative bg-surface border flex flex-col overflow-hidden ${toneClass.border}`;
   const bodyClasses = bodyClassName
-    ? `p-5 text-nord-4 ${bodyClassName}`
-    : "p-5 text-nord-4";
+    ? `p-5 text-ink ${bodyClassName}`
+    : "p-5 text-ink";
 
   React.useEffect(() => {
     if (!onClose) return;
@@ -92,7 +85,7 @@ export const ModalFrame: React.FC<ModalFrameProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-nord-0/70 backdrop-blur-md p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"
       onClick={() => onClose?.()}
       role="dialog"
       aria-modal="true"
@@ -104,35 +97,31 @@ export const ModalFrame: React.FC<ModalFrameProps> = ({
       >
         <div className={containerClasses}>
           {!hideHeader && (
-            <div
-              className={`flex items-start justify-between gap-3 px-5 py-4 border-b border-nord-16/70 ${toneClass.header}`}
-            >
+            <div className="flex items-start justify-between gap-3 px-5 py-3 border-b border-divider">
               <div className="flex items-start gap-3 min-w-0">
                 {icon && (
-                  <div className={`p-2 rounded-xl border border-transparent ${toneClass.icon}`}>
-                    {icon}
-                  </div>
+                  <div className={`p-1 ${toneClass.accent}`}>{icon}</div>
                 )}
                 <div className="min-w-0">
                   <h3
-                    className={`text-sm md:text-base ${toneClass.accent} truncate`}
+                    className={`text-sm tracking-[0.08em] ${toneClass.accent} truncate`}
                   >
                     {title}
                   </h3>
                   {subtitle && (
-                    <p className="text-xs text-nord-3 mt-1 leading-relaxed">
+                    <p className="text-xs text-muted mt-1 leading-relaxed">
                       {subtitle}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-nord-3">
+              <div className="flex items-center gap-2 text-muted">
                 {headerActions}
                 {onClose && (
                   <button
                     onClick={onClose}
-                    className="p-2 rounded-lg hover:bg-nord-2 hover:text-nord-13 transition-colors"
+                    className="p-2 hover:bg-raised hover:text-yellow transition-colors"
                     title="Close"
                   >
                     <X size={18} />
@@ -147,7 +136,7 @@ export const ModalFrame: React.FC<ModalFrameProps> = ({
           </div>
 
           {footer && (
-            <div className="border-t border-nord-16/50 bg-nord-0/60 px-5 py-3 flex items-center justify-end gap-3">
+            <div className="border-t border-divider bg-bar/60 px-5 py-3 flex items-center justify-end gap-3">
               {footer}
             </div>
           )}

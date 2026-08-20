@@ -17,8 +17,10 @@ interface WidgetFrameProps {
   style?: React.CSSProperties;
 }
 
-const baseContainer =
-  "flex flex-col bg-nord-0/90 border-2 border-nord-16 rounded-frame transition-all duration-200 overflow-hidden hover:border-nord-8/70 backdrop-blur-md";
+// Splits pane: a flat region on the shared surface. No card chrome — the
+// title lives inside a horizontal rule, controls surface on hover, and
+// separation from neighbours comes from the 1px divider grid outside.
+const baseContainer = "group/pane flex flex-col bg-surface min-h-0";
 
 export const WidgetFrame: React.FC<WidgetFrameProps> = ({
   title,
@@ -39,55 +41,55 @@ export const WidgetFrame: React.FC<WidgetFrameProps> = ({
     ? `${baseContainer} ${className}`
     : baseContainer;
   const contentClasses = bodyClassName
-    ? `flex-1 overflow-auto p-5 text-nord-4 ${bodyClassName}`
-    : "flex-1 overflow-auto p-5 text-nord-4";
+    ? `flex-1 overflow-auto p-4 text-ink ${bodyClassName}`
+    : "flex-1 overflow-auto p-4 text-ink";
 
   return (
-    <div className={containerClasses} style={style}>
-      <div className="flex items-center justify-between px-4 py-2 border-b border-nord-16 bg-nord-16">
-        <div className="flex items-center gap-3 min-w-0">
-          {icon && (
-            <div className="p-2 text-nord-3">{icon}</div>
-          )}
-          <div className="flex flex-col gap-1 min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-nord-4 font-normal text-sm md:text-base truncate tracking-[0.16em]">
-                {title}
-              </span>
-              {badge}
-            </div>
-            {(subtitle || meta) && (
-              <div className="flex items-center gap-3 text-muted-sm">
-                {subtitle && <span className="truncate">{subtitle}</span>}
-                {subtitle && meta && <span className="text-nord-3/60">•</span>}
-                {meta && <span className="truncate">{meta}</span>}
-              </div>
-            )}
-          </div>
+    <section className={containerClasses} style={style}>
+      <div className="flex items-center gap-2.5 px-4 pt-3 select-none whitespace-nowrap">
+        <span className="text-faint" aria-hidden>
+          ──
+        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          {icon && <span className="text-muted flex-shrink-0">{icon}</span>}
+          <span className="text-lg tracking-[0.14em] text-blue group-hover/pane:text-accent transition-colors truncate">
+            {title}
+          </span>
+          {badge}
         </div>
-
-        <div className="flex items-center gap-2 text-nord-3">
+        {(subtitle || meta) && (
+          <span className="text-xs text-muted truncate min-w-0">
+            {subtitle}
+            {subtitle && meta && <span className="text-faint"> · </span>}
+            {meta}
+          </span>
+        )}
+        <span
+          className="flex-1 min-w-[1rem] border-t border-faint/50 group-hover/pane:border-accent/40 transition-colors"
+          aria-hidden
+        />
+        <div className="flex items-center gap-1 text-muted md:opacity-0 md:group-hover/pane:opacity-100 transition-opacity">
           {controls}
           {onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              className="p-2 hover:bg-nord-2 rounded-lg hover:text-nord-13 transition-colors"
+              className="p-1 hover:text-accent transition-colors"
               title={collapsed ? "Expand" : "Collapse"}
             >
               <ChevronDown
-                size={18}
-                className={collapsed ? "rotate-180 transition-transform" : ""}
+                size={14}
+                className={collapsed ? "rotate-180 transition-transform" : "transition-transform"}
               />
             </button>
           )}
         </div>
       </div>
 
-      <div className={`${collapsed ? "hidden" : "flex"} flex-1 flex-col`}>
+      <div className={`${collapsed ? "hidden" : "flex"} flex-1 flex-col min-h-0`}>
         <div className={contentClasses} style={bodyStyle}>
           {children}
         </div>
       </div>
-    </div>
+    </section>
   );
 };
