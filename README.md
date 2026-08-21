@@ -1,18 +1,5 @@
-# nord-dashboard
+# The Wired
 
-personal dashboard for tracking flights, tasks, and markets.
-built with react + tailwind.
-uses the nord color palette.
+My personal dashboard for keeping calendars, tasks, notes, markets, weather, and a clock in one place. It exists because I wanted the useful parts of my day visible on a single tmux-like screen instead of scattered across several apps.
 
-## features
-
-- google calendar integration
-- flight status & duty tracking
-- crypto market watch
-- firebase tasks
-- daily scripture
-
-## setup
-
-1. `npm install`
-2. `npm run dev`
+Built with React, TypeScript, Vite, Tailwind CSS, Firebase, and the Google Calendar API.

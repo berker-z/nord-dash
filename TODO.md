@@ -14,6 +14,7 @@
 
 ## Completed (current pass)
 
+- [x] Rewrote `README.md` as a sparse description of what the dashboard is, why it exists, and its stack.
 - [x] Split dashboard identity login from Calendar offline authorization so normal sign-in no longer mints/replaces Calendar refresh tokens for the main account.
 - [x] Narrowed newly issued Calendar tokens to event access plus calendar-list read access, and enforced account-email matching during re-auth.
 - [x] Extended full-page Google OAuth redirect fallback to Calendar connect/re-auth so Helium can recover failed accounts without popup support.
