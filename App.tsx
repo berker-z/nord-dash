@@ -74,7 +74,7 @@ const initialLayout: Record<number, LayoutItem[]> = {
     },
   ],
   1: [
-    { id: "w3", type: WidgetType.TODO, title: "/system_tasks", heightLevel: 0 },
+    { id: "w3", type: WidgetType.TODO, title: "/tasks", heightLevel: 0 },
   ],
   2: [
     { id: "w4", type: WidgetType.CRYPTO, title: "/markets", heightLevel: 0 },

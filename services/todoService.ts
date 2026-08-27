@@ -70,6 +70,14 @@ export const addTodo = async (userEmail: string, todo: TodoItem) => {
 };
 
 /**
+ * Delete every todo. A wholesale replace, so no transaction is needed —
+ * the intent is "empty the list", whatever it currently holds.
+ */
+export const clearTodos = async (userEmail: string) => {
+  await saveTodos(userEmail, []);
+};
+
+/**
  * Update a single todo using a transaction to prevent race conditions
  */
 export const updateTodo = async (

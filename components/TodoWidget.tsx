@@ -6,7 +6,9 @@ import {
   addTodo,
   updateTodo,
   deleteTodo as deleteTodoFromFirestore,
+  clearTodos,
 } from "../services/todoService";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface TodoWidgetProps {
   userEmail: string | null;
@@ -17,6 +19,7 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   // Track if we've loaded initial data from Firestore to prevent saving during mount/logout
   const hasLoadedFromFirestore = useRef(false);
 
@@ -108,6 +111,18 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
     }
   };
 
+  const deleteAllTodos = async () => {
+    setIsClearModalOpen(false);
+    if (!userEmail) return;
+
+    try {
+      await clearTodos(userEmail);
+      // The real-time subscription will update the UI automatically
+    } catch (error) {
+      console.error("Failed to delete all todos:", error);
+    }
+  };
+
   if (!userEmail) {
     return (
       <div className="flex flex-col font-mono items-center justify-center h-64 text-muted">
@@ -129,7 +144,7 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
     <div className="flex flex-col font-mono">
       {syncError && (
         <div className="mb-3 p-2 text-xs text-red border border-red/60 bg-red/10">
-          ! TODO_SYNC_FAILED: {syncError}
+          Sync failed: {syncError}
         </div>
       )}
       <ul className="space-y-1 flex-1 overflow-y-auto pr-2 mb-4">
@@ -169,23 +184,42 @@ export const TodoWidget: React.FC<TodoWidgetProps> = ({ userEmail }) => {
         ))}
         {todos.length === 0 && (
           <li className="text-muted italic text-center mt-10">
-            {">"} NO_ACTIVE_TASKS
+            Nothing to do.
           </li>
         )}
       </ul>
 
       <form
         onSubmit={handleAdd}
-        className="pt-3 border-t border-divider mt-auto"
+        className="pt-3 border-t border-divider mt-auto flex items-center gap-2"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="New task..."
-          className="w-full bg-raised border border-faint px-3 py-2 focus:outline-none focus:border-accent text-ink placeholder-muted"
+          className="flex-1 min-w-0 bg-raised border border-faint px-3 py-2 focus:outline-none focus:border-accent text-ink placeholder-muted"
         />
+        <button
+          type="button"
+          onClick={() => setIsClearModalOpen(true)}
+          disabled={todos.length === 0}
+          title="Delete all tasks"
+          className="border border-faint text-muted hover:text-red hover:border-red/60 disabled:opacity-30 disabled:hover:text-muted disabled:hover:border-faint p-2.5 transition-colors"
+        >
+          <Trash2 size={16} />
+        </button>
       </form>
+
+      <ConfirmModal
+        isOpen={isClearModalOpen}
+        title="Delete All Tasks"
+        message={`Delete all ${todos.length} task${todos.length === 1 ? "" : "s"}? This cannot be undone.`}
+        onConfirm={deleteAllTodos}
+        onCancel={() => setIsClearModalOpen(false)}
+        confirmText="Delete All"
+        isDestructive={true}
+      />
     </div>
   );
 };

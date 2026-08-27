@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutItem } from "../types";
+import { LayoutItem, WidgetType } from "../types";
 import { Minus, Plus } from "lucide-react";
 import { WidgetFrame } from "./ui/WidgetFrame";
 
@@ -15,11 +15,15 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
   onResize,
 }) => {
   const [isMinimized, setIsMinimized] = React.useState(false);
+  // Only the notepad grows and shrinks — every other pane sizes itself to
+  // its content, so the +/- controls were just noise in their titlebars.
+  const isResizable = item.type === WidgetType.NOTEPAD;
 
   return (
     <WidgetFrame
       title={item.title}
       controls={
+        isResizable &&
         !isMinimized && (
           <div className="flex items-center gap-1">
             <button
