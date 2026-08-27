@@ -24,6 +24,7 @@ interface CalendarWidgetProps {
   ) => Promise<void>;
   accountError?: string | null;
   failedAccounts?: string[];
+  accountErrors?: Record<string, string>;
   onReauthAccount?: (accountEmail: string) => Promise<void>;
 }
 
@@ -36,6 +37,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   onToggleCalendarVisibility,
   accountError,
   failedAccounts = [],
+  accountErrors = {},
   onReauthAccount,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -227,23 +229,28 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
         <div className="mb-3 p-2 text-sm text-red border border-red/60 bg-red/10">
           <div>{accountError}</div>
           {failedAccounts.length > 0 && (
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-red/80">
-              <span className="uppercase tracking-wide">Affected:</span>
-              <span className="text-red/90">
-                {failedAccounts.join(", ")}
-              </span>
-              {onReauthAccount && (
-                <button
-                  onClick={() => {
-                    void onReauthAccount(failedAccounts[0]).catch(
-                      () => undefined,
-                    );
-                  }}
-                  className="ml-auto text-[11px] px-2 py-1 border border-red/60 hover:bg-red/10 transition-colors"
+            <div className="mt-2 space-y-1 text-[11px] text-red/80">
+              {failedAccounts.map((email) => (
+                <div
+                  key={email}
+                  className="flex flex-wrap items-center gap-2"
                 >
-                  Re-auth first
-                </button>
-              )}
+                  <span className="text-red/90">{email}</span>
+                  {accountErrors[email] && (
+                    <span className="opacity-70">{accountErrors[email]}</span>
+                  )}
+                  {onReauthAccount && (
+                    <button
+                      onClick={() => {
+                        void onReauthAccount(email).catch(() => undefined);
+                      }}
+                      className="ml-auto text-[11px] px-2 py-1 border border-red/60 hover:bg-red/10 transition-colors"
+                    >
+                      Re-auth
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

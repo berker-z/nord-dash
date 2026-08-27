@@ -113,6 +113,7 @@ const App: React.FC = () => {
     loading: loadingAccounts,
     error: calendarAccountError,
     failedAccounts: failedCalendarAccounts,
+    accountErrors: calendarAccountErrors,
     refreshAccounts: refreshCalendarAccounts,
     connectAccount: connectCalendarAccount,
     reauthAccount: reauthCalendarAccount,
@@ -302,6 +303,7 @@ const App: React.FC = () => {
             onRemoveAccount={removeCalendarAccount}
             accountError={calendarAccountError}
             failedAccounts={failedCalendarAccounts}
+            accountErrors={calendarAccountErrors}
             onReauthAccount={reauthCalendarAccount}
             onToggleCalendarVisibility={setCalendarVisibility}
           />
@@ -316,6 +318,7 @@ const App: React.FC = () => {
             onRemoveAccount={removeCalendarAccount}
             accountError={calendarAccountError}
             failedAccounts={failedCalendarAccounts}
+            accountErrors={calendarAccountErrors}
             onReauthAccount={reauthCalendarAccount}
             onToggleCalendarVisibility={setCalendarVisibility}
           />

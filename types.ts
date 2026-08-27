@@ -66,6 +66,10 @@ export interface CalendarAccount {
   accessToken: string;
   refreshToken: string; // Critical for offline access
   expiresAt: number;    // timestamp
+  // OAuth client the tokens were issued by. Refresh tokens are bound to the
+  // client that minted them, so if this no longer matches the configured
+  // client the account must be reconnected rather than refreshed.
+  clientId?: string;
   picture?: string;
   name?: string;
   calendars: CalendarConfig[];

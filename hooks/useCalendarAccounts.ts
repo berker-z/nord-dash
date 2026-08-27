@@ -15,6 +15,8 @@ interface Result {
   loading: boolean;
   error: string | null;
   failedAccounts: string[];
+  /** email -> the actual reason Google refused, for display + debugging */
+  accountErrors: Record<string, string>;
   refreshAccounts: () => Promise<void>;
   connectAccount: () => Promise<void>;
   reauthAccount: (accountEmail: string) => Promise<void>;
@@ -31,6 +33,9 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [failedAccounts, setFailedAccounts] = useState<string[]>([]);
+  const [accountErrors, setAccountErrors] = useState<Record<string, string>>(
+    {},
+  );
 
   const refreshAccounts = useCallback(async () => {
     if (!userEmail) {
@@ -41,6 +46,7 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     setLoading(true);
     let hadRefreshFailure = false;
     const failedEmails: string[] = [];
+    const failureReasons: Record<string, string> = {};
     try {
       const accs = await getConnectedAccounts(userEmail);
       const refreshedAccounts = await Promise.all(
@@ -54,6 +60,7 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
             console.error("Failed to refresh token for", account.email, err);
             hadRefreshFailure = true;
             failedEmails.push(account.email);
+            failureReasons[account.email] = getCalendarAuthErrorMessage(err);
             return account;
           }
 
@@ -75,6 +82,7 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
             if (err instanceof Error && err.message === "UNAUTHORIZED") {
               hadRefreshFailure = true;
               failedEmails.push(account.email);
+              failureReasons[account.email] = getCalendarAuthErrorMessage(err);
             }
             return updatedAccount;
           }
@@ -82,15 +90,20 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
       );
       setAccounts(refreshedAccounts);
       setFailedAccounts(failedEmails);
+      setAccountErrors(failureReasons);
       setError(
         hadRefreshFailure
-          ? `ACCOUNT_REFRESH_FAILED: ${failedEmails.join(", ")}`
+          ? // Show the real cause, not just which accounts failed — a bare
+            // "ACCOUNT_REFRESH_FAILED" makes this impossible to diagnose.
+            failureReasons[failedEmails[0]] ||
+              `ACCOUNT_REFRESH_FAILED: ${failedEmails.join(", ")}`
           : null,
       );
     } catch (e) {
       console.error("Failed to load calendar accounts", e);
-      setError("ACCOUNT_LOAD_FAILED");
+      setError(`ACCOUNT_LOAD_FAILED: ${getCalendarAuthErrorMessage(e)}`);
       setFailedAccounts([]);
+      setAccountErrors({});
     } finally {
       setLoading(false);
     }
@@ -124,13 +137,12 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
             })
             .catch((e) => {
               console.error("Failed to refresh token for", account.email, e);
-              setFailedAccounts((prev) => {
-                const next = prev.includes(account.email)
-                  ? prev
-                  : [...prev, account.email];
-                setError(`ACCOUNT_REFRESH_FAILED: ${next.join(", ")}`);
-                return next;
-              });
+              const reason = getCalendarAuthErrorMessage(e);
+              setAccountErrors((prev) => ({ ...prev, [account.email]: reason }));
+              setFailedAccounts((prev) =>
+                prev.includes(account.email) ? prev : [...prev, account.email],
+              );
+              setError(reason);
             });
         });
       },
@@ -221,6 +233,7 @@ export const useCalendarAccounts = (userEmail: string | null): Result => {
     loading,
     error,
     failedAccounts,
+    accountErrors,
     refreshAccounts,
     connectAccount,
     reauthAccount,

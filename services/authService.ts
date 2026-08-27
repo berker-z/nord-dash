@@ -546,6 +546,7 @@ const saveCalendarAccount = async (
     accessToken: tokens.access_token,
     refreshToken: resolvedRefreshToken,
     expiresAt: Date.now() + tokens.expires_in * 1000,
+    clientId: GOOGLE_CLIENT_ID,
     name: profile.name,
     picture: profile.picture,
     calendars: normalizeCalendars(calendars, accountEmail),
@@ -649,6 +650,15 @@ export const refreshAccountTokenIfNeeded = async (
       if (!account.refreshToken) {
         throw new Error(`MISSING_REFRESH_TOKEN: ${account.email}`);
       }
+      // A refresh token only works for the client that issued it. After the
+      // OAuth client is swapped, refreshing is hopeless — say so plainly
+      // instead of surfacing a bare invalid_grant.
+      if (account.clientId && account.clientId !== GOOGLE_CLIENT_ID) {
+        throw createError(
+          `CALENDAR_ACCOUNT_STALE_CLIENT: ${account.email} was connected with a different Google OAuth client. Disconnect this account and reconnect it.`,
+          "CALENDAR_ACCOUNT_STALE_CLIENT",
+        );
+      }
       const data = await refreshOAuthToken(account.refreshToken);
       const newExpiresAt = Date.now() + data.expires_in * 1000;
 
@@ -683,12 +693,28 @@ export const getCalendarAuthErrorMessage = (error: unknown) => {
   const message =
     error instanceof Error ? error.message : String(error || "Unknown error");
 
-  if (message.includes("CALENDAR_REFRESH_TOKEN_MISSING")) {
+  if (
+    message.includes("CALENDAR_REFRESH_TOKEN_MISSING") ||
+    message.includes("CALENDAR_ACCOUNT_STALE_CLIENT")
+  ) {
     return message;
   }
 
+  // The OAuth client lives in whichever Google Cloud project owns it — its
+  // number is the prefix of the client ID. Surfacing it makes the "published
+  // the consent screen of the wrong project" mistake obvious.
+  const oauthProjectNumber = GOOGLE_CLIENT_ID.split("-")[0];
+
   if (message.includes("invalid_grant")) {
-    return `${message}. Google rejected the stored refresh token. The common causes are token revocation or an OAuth consent screen that is still in Testing, where calendar refresh tokens expire after 7 days.`;
+    return `${message}. Google rejected the stored refresh token. Usual causes: the consent screen for the project that owns this OAuth client (project ${oauthProjectNumber}) is still in Testing, where calendar refresh tokens expire after 7 days; or access was revoked. Check https://console.cloud.google.com/auth/audience?project=${oauthProjectNumber} — it must say "In production", and it is NOT necessarily the same project as Firebase.`;
+  }
+
+  if (message.includes("invalid_client")) {
+    return `${message}. Google rejected the client credentials themselves — VITE_GOOGLE_CLIENT_ID / VITE_GOOGLE_CLIENT_SECRET in this deployment do not match a live OAuth client in project ${oauthProjectNumber}.`;
+  }
+
+  if (message.includes("unauthorized_client")) {
+    return `${message}. This OAuth client is not allowed to use this grant. Confirm the client in project ${oauthProjectNumber} is a "Web application" client and that the redirect URI matches this origin.`;
   }
 
   if (message.includes("GOOGLE_POPUP_FAILED_TO_OPEN")) {
