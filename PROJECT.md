@@ -37,6 +37,7 @@
 - Crypto: Fast Binance pairs plus slower CoinGecko metrics when `COINGECKO_API_KEY` is present.
 - Bible: Structured `{ reference, text }` responses from OpenAI via `gpt-5.4-nano` on `POST /v1/responses` with strict JSON schema output.
 - Weather: One-off fetch on load from Open-Meteo.
+- Moon phase: computed locally in `services/moonService.ts` from Sun/Moon ecliptic longitudes (low-order Meeus series, within ~30 min of USNO phase times); no network. Rendered by `components/ui/MoonPhaseIcon.tsx` in the statusline, memoised per calendar day.
 - Notepad: Firebase-backed notes stored under `users/{email}/notes/{noteId}` with manual save (autosave TBD), icon-only controls (new/load/save), modal picker that lists notes by name/snippet, autosizing textarea. Lives under the agenda in the left column.
 
 ## UI & Styling

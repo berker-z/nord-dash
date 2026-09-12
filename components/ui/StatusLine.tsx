@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Cloud, CloudRain, Lock, Sun } from "lucide-react";
 import { WeatherData } from "../../types";
 import { ThemeDef } from "../../themes";
+import { getMoonPhase } from "../../services/moonService";
+import { MoonPhaseIcon } from "./MoonPhaseIcon";
 
 interface StatusLineProps {
   userName: string | null;
@@ -62,6 +64,11 @@ export const StatusLine: React.FC<StatusLineProps> = ({
   }, [menuOpen]);
 
   const activeTheme = themes.find((t) => t.id === theme);
+  // currentTime ticks every second; the phase only changes meaningfully per
+  // day, so key the memo on the date to skip recomputing on every render.
+  const dayKey = formatDate(currentTime);
+  const moon = useMemo(() => getMoonPhase(currentTime), [dayKey]);
+  const moonLabel = `${moon.name} · ${Math.round(moon.illumination * 100)}% lit · day ${Math.floor(moon.age) + 1}`;
 
   return (
     // z-[55]: above the login overlay (z-50) so theme/clock stay reachable
@@ -132,6 +139,19 @@ export const StatusLine: React.FC<StatusLineProps> = ({
         <span className="hidden sm:inline-flex items-center gap-2.5">
           <Sep />
           <span className="text-muted uppercase">istanbul</span>
+        </span>
+
+        <Sep />
+
+        <span
+          className="flex items-center gap-1.5 text-ink cursor-default"
+          title={moonLabel}
+          aria-label={moonLabel}
+        >
+          <MoonPhaseIcon phase={moon} size={16} />
+          <span className="hidden lg:inline text-muted">
+            {moon.name.replace(/ /g, "_")}
+          </span>
         </span>
 
         <span className="hidden md:inline-flex items-center gap-2.5">

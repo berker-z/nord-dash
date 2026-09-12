@@ -60,8 +60,14 @@ variables, RGB triplets) + one entry in `themes.ts`. No component changes.
 - The statusline (`components/ui/StatusLine.tsx`) is fixed to the top,
   `h-11 bg-bar text-base`, `z-[55]` (above the login overlay z-50, below
   modals z-[60]); `main` gets `pt-11` to clear it. Left: `[thewired]` + user.
-  Right: theme switcher (menu opens downward), weather, city, date, clock,
-  logout/locked.
+  Right: theme switcher (menu opens downward), weather, city, moon phase,
+  date, clock, logout/locked.
+- Moon phase glyph (`components/ui/MoonPhaseIcon.tsx`): 16px SVG, dark disc
+  `fill-bar stroke-faint`, lit region in `currentColor` (`text-ink`). The lit
+  shape is limb arc + half-ellipse terminator so it morphs continuously
+  rather than snapping between eight icons; waxing lights the right side
+  (northern hemisphere). Phase name shows at `lg:` and up in `text-muted`
+  with underscores (`waxing_gibbous`); hover title gives name, % lit, day.
 
 ## Primitives
 
