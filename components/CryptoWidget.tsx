@@ -48,22 +48,23 @@ export const CryptoWidget: React.FC = () => {
   const fetchCoinGeckoData = useCallback(async () => {
     if (!COINGECKO_API_KEY) return;
 
-    const options = {
-      method: "GET",
-      headers: {
-        accept: "application/json",
-        "x-cg-demo-api-key": COINGECKO_API_KEY,
-      },
+    // Key goes in the query string, not the x-cg-demo-api-key header: a custom
+    // header forces a CORS preflight, and CoinGecko answers OPTIONS with a 403.
+    const cgFetch = async (path: string) => {
+      const sep = path.includes("?") ? "&" : "?";
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/${path}${sep}x_cg_demo_api_key=${COINGECKO_API_KEY}`
+      );
+      if (!res.ok) throw new Error(`CoinGecko ${res.status} on ${path}`);
+      return res.json();
     };
 
     try {
       // 1. Fetch Coins (Market Dominance & Milady Cult Coin)
       // We use the 'ids' parameter to fetch specific coins
-      const coinsRes = await fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=market-dominance,milady-cult-coin",
-        options
+      const coinsJson = await cgFetch(
+        "coins/markets?vs_currency=usd&ids=market-dominance,milady-cult-coin"
       );
-      const coinsJson = await coinsRes.json();
 
       const coinItems = Array.isArray(coinsJson)
         ? coinsJson.map((coin: any) => ({
@@ -74,11 +75,7 @@ export const CryptoWidget: React.FC = () => {
         : [];
 
       // 2. Milady Maker NFT
-      const nftRes = await fetch(
-        "https://api.coingecko.com/api/v3/nfts/milady-maker",
-        options
-      );
-      const nftJson = await nftRes.json();
+      const nftJson = await cgFetch("nfts/milady-maker");
       const nftData = nftJson.floor_price
         ? {
             symbol: "MILADY NFT",

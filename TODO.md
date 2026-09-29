@@ -40,6 +40,7 @@
 - [x] Centralized Google Calendar API client (`services/googleCalendarClient.ts`) and removed duplicate token helpers.
 - [x] Stabilized calendar account actions (owner email prop, Firestore toggle/remove helpers).
 - [x] Guarded CoinGecko config via Vite env (`VITE_COINGECKO_API_KEY`).
+- [x] Fixed CoinGecko rows vanishing in prod: moved the demo key from the `x-cg-demo-api-key` header to the `x_cg_demo_api_key` query param (header forced a CORS preflight that CoinGecko now 403s) and made non-2xx responses throw.
 - [x] Made widget resize updates immutable to prevent layout state mutation.
 - [x] Added `useCalendarEvents` hook and moved `CalendarWidget` event fetching onto it.
 - [x] Extracted calendar modals/list items into dedicated components to reduce `CalendarWidget` size.

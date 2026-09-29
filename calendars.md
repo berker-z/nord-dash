@@ -39,7 +39,7 @@
 ### Todo/Other Widgets (for context)
 
 - Todos: `services/todoService.ts` uses Firestore transactions; `subscribeTodos` sets/initializes `users/{email}` with `{ todos: [] }`.
-- Crypto: Binance + CoinGecko; CoinGecko uses `COINGECKO_API_KEY` (process env) for `x-cg-demo-api-key`.
+- Crypto: Binance + CoinGecko; CoinGecko uses `COINGECKO_API_KEY` (process env) as the `x_cg_demo_api_key` query param (the header form triggers a CORS preflight that CoinGecko 403s).
 - Bible: OpenAI `gpt-5.4-nano` via `openaiService.ts`, using `POST /v1/responses` with strict JSON schema output.
 - Weather: Open-Meteo, public.
 
